@@ -77,9 +77,18 @@ function doLogout() {
   document.getElementById('login-password').value = '';
 }
 
+function togglePasswordVisibility() {
+  const input = document.getElementById('login-password');
+  const icon = document.getElementById('login-eye-icon');
+  const showing = input.type === 'text';
+  input.type = showing ? 'password' : 'text';
+  icon.className = showing ? 'bi bi-eye' : 'bi bi-eye-slash';
+}
+
 function initApp() {
-  document.getElementById('sidebar-user-name').textContent = State.user.name || State.user.email;
-  document.getElementById('sidebar-user-role').textContent = State.user.role;
+  const displayName = State.user.name || State.user.email;
+  document.getElementById('navbar-user-name').textContent = displayName;
+  document.getElementById('navbar-user-initial').textContent = displayName.charAt(0).toUpperCase();
   Router.go('queue');
 }
 
@@ -89,7 +98,7 @@ function initApp() {
 const Router = {
   go(viewName) {
     document.querySelectorAll('.view').forEach((el) => { el.hidden = true; });
-    document.querySelectorAll('.nav-item').forEach((el) => el.classList.toggle('active', el.dataset.nav === viewName));
+    document.querySelectorAll('.app-sidebar__link').forEach((el) => el.classList.toggle('active', el.dataset.nav === viewName));
 
     if (viewName === 'queue') {
       document.getElementById('view-queue').hidden = false;

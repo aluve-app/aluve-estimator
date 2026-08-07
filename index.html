@@ -4,29 +4,52 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Project Estimator — Aluve</title>
-<link rel="stylesheet" href="css/style.css">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <!-- ============================================================
-     LOGIN VIEW
+     LOGIN VIEW — sesuai desain mockup (panel hitam kiri + kartu kanan)
      ============================================================ -->
 <div id="view-login" class="login-screen">
-  <div class="login-card">
-    <div class="login-logo">Aluve</div>
-    <h1 class="login-title">Project Estimator</h1>
-    <p class="login-subtitle">Masuk dengan akun estimator Anda</p>
+  <div class="login-left">
+    <div class="login-brand-mark">ALUVE</div>
+    <p class="login-brand-tagline-top">Project Estimator App</p>
+    <p class="login-brand-tagline-bottom">Track Every Visit, Grow Every Project</p>
+  </div>
 
-    <div class="field">
-      <label for="login-email">Email</label>
-      <input type="email" id="login-email" placeholder="nama@email.com" autocomplete="username">
+  <div class="login-right">
+    <div class="login-card">
+      <h1 class="login-welcome">Welcome!</h1>
+      <p class="login-subtitle">Enter your credential login</p>
+
+      <div class="login-input-group">
+        <i class="bi bi-envelope"></i>
+        <input type="email" id="login-email" placeholder="Enter your email" autocomplete="username">
+      </div>
+      <div class="login-input-group">
+        <i class="bi bi-lock"></i>
+        <input type="password" id="login-password" placeholder="Enter your password" autocomplete="current-password">
+        <button type="button" class="login-eye-toggle" onclick="togglePasswordVisibility()"><i class="bi bi-eye" id="login-eye-icon"></i></button>
+      </div>
+
+      <div class="login-row-secondary">
+        <label class="login-remember"><input type="checkbox" id="login-remember"> Remember me</label>
+        <a href="#" class="login-forgot" onclick="event.preventDefault(); Toast.show('Hubungi Admin untuk reset password.');">Forgot password?</a>
+      </div>
+
+      <p id="login-error" class="login-error"></p>
+
+      <button id="btn-login" class="login-submit-btn" onclick="doLogin()">Log in</button>
+
+      <p class="login-footer">ALUVE &copy; Copyright 2026. All Right Reserved</p>
     </div>
-    <div class="field">
-      <label for="login-password">Password</label>
-      <input type="password" id="login-password" placeholder="Password" autocomplete="current-password">
-    </div>
-    <p id="login-error" class="login-error"></p>
-    <button id="btn-login" class="btn btn-primary btn-block" onclick="doLogin()">Masuk</button>
   </div>
 </div>
 
@@ -35,23 +58,24 @@
      ============================================================ -->
 <div id="app" hidden>
 
-  <aside class="sidebar">
-    <div class="sidebar-logo">Aluve<span>Estimator</span></div>
-    <nav class="sidebar-nav">
-      <button class="nav-item active" data-nav="queue" onclick="Router.go('queue')">
-        <span class="nav-icon">📋</span> Antrian Quotation
+  <header class="app-navbar">
+    <div class="app-navbar__brand">ALUVE <span>Estimator</span></div>
+    <div class="app-navbar__actions">
+      <span class="app-navbar__user-name" id="navbar-user-name">-</span>
+      <div class="app-navbar__avatar" id="navbar-user-initial">-</div>
+      <button class="app-navbar__logout" onclick="doLogout()" title="Keluar"><i class="bi bi-box-arrow-right"></i></button>
+    </div>
+  </header>
+
+  <aside class="app-sidebar">
+    <nav class="app-sidebar__nav">
+      <button class="app-sidebar__link active" data-nav="queue" onclick="Router.go('queue')">
+        <i class="bi bi-clipboard-data"></i> Antrian Quotation
       </button>
-      <button class="nav-item" data-nav="catalog" onclick="Router.go('catalog')">
-        <span class="nav-icon">📦</span> Katalog Harga
+      <button class="app-sidebar__link" data-nav="catalog" onclick="Router.go('catalog')">
+        <i class="bi bi-box-seam"></i> Katalog Harga
       </button>
     </nav>
-    <div class="sidebar-footer">
-      <div class="sidebar-user">
-        <div class="sidebar-user-name" id="sidebar-user-name">-</div>
-        <div class="sidebar-user-role" id="sidebar-user-role">-</div>
-      </div>
-      <button class="btn-logout" onclick="doLogout()">Keluar</button>
-    </div>
   </aside>
 
   <main class="main-content">
@@ -60,7 +84,7 @@
     <section id="view-queue" class="view">
       <div class="view-header">
         <h1>Antrian Quotation</h1>
-        <button class="btn btn-primary" onclick="QueueView.openCreateModal()">+ Quotation Baru</button>
+        <button class="btn-primary" onclick="QueueView.openCreateModal()"><i class="bi bi-plus-lg"></i> Quotation Baru</button>
       </div>
 
       <div class="tabs" id="queue-tabs">
@@ -78,14 +102,14 @@
     <!-- ---------- VIEW: DETAIL QUOTATION ---------- -->
     <section id="view-quotation-detail" class="view" hidden>
       <div class="view-header">
-        <button class="btn-back" onclick="Router.go('queue')">&larr; Kembali ke Antrian</button>
+        <button class="btn-back" onclick="Router.go('queue')"><i class="bi bi-arrow-left"></i> Kembali ke Antrian</button>
       </div>
 
       <div class="detail-card">
         <div class="detail-card-header">
           <div>
             <h1 id="detail-quotation-number">-</h1>
-            <p class="detail-subtitle">Revisi <span id="detail-revision">-</span> · Status: <span id="detail-status" class="status-badge">-</span></p>
+            <p class="detail-subtitle">Revisi <span id="detail-revision">-</span> &middot; Status: <span id="detail-status" class="status-badge">-</span></p>
           </div>
         </div>
 
@@ -118,8 +142,8 @@
         </div>
 
         <div class="detail-actions">
-          <button class="btn btn-secondary" onclick="QuotationDetailView.save()">Simpan</button>
-          <button class="btn btn-primary" onclick="QuotationDetailView.markComplete()" disabled title="Butuh minimal 1 item — fitur item menyusul">Tandai Selesai Dihitung</button>
+          <button class="btn-secondary" onclick="QuotationDetailView.save()">Simpan</button>
+          <button class="btn-primary" onclick="QuotationDetailView.markComplete()" disabled title="Butuh minimal 1 item — fitur item menyusul">Tandai Selesai Dihitung</button>
         </div>
       </div>
     </section>
@@ -159,16 +183,16 @@
     </div>
     <p id="create-error" class="login-error"></p>
     <div class="modal-actions">
-      <button class="btn btn-secondary" onclick="QueueView.closeCreateModal()">Batal</button>
-      <button class="btn btn-primary" onclick="QueueView.submitCreate()">Buat</button>
+      <button class="btn-secondary" onclick="QueueView.closeCreateModal()">Batal</button>
+      <button class="btn-primary" onclick="QueueView.submitCreate()">Buat</button>
     </div>
   </div>
 </div>
 
 <div id="toast" class="toast"></div>
 
-<script src="js/config.js"></script>
-<script src="js/api.js"></script>
-<script src="js/app.js"></script>
+<script src="config.js"></script>
+<script src="api.js"></script>
+<script src="app.js"></script>
 </body>
 </html>

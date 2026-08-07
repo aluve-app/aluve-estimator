@@ -1,0 +1,275 @@
+/* ============================================================
+   ALUVE PROJECT ESTIMATOR — PRINT STYLESHEET
+   Loaded with media="print" — has zero effect on screen rendering.
+   Renders #printQuotationContainer as a professional quotation and
+   hides the rest of the app entirely.
+   ============================================================ */
+
+@page {
+  size: A4;
+  margin: 18mm 14mm;
+}
+
+/* Hide the whole app; reveal only the print container */
+body * { visibility: hidden; }
+#printQuotationContainer,
+#printQuotationContainer * { visibility: visible; }
+
+#printQuotationContainer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  display: block !important;
+}
+
+/* ----------------------------------------------------------
+   Document table — thead/tfoot repeat automatically on every
+   printed page, which is what gives us a reliable header and
+   footer without any JS-driven pagination logic.
+---------------------------------------------------------- */
+.print-doc {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'Inter', Arial, sans-serif;
+  font-size: 10.5pt;
+  color: #1B2228;
+}
+
+.print-doc thead { display: table-header-group; }
+.print-doc tfoot { display: table-footer-group; }
+.print-doc tbody tr { page-break-inside: avoid; }
+
+/* QA FIX (item #3): thead/tfoot cells had zero padding, so the header
+   letterhead and the grand-total figures sat flush against the page's
+   printable edge with no breathing room. tbody already had padding;
+   this brings thead/tfoot in line with it. */
+.print-doc thead > tr > th,
+.print-doc tfoot > tr > td {
+  padding: 0 6pt;
+}
+
+/* ---- Header (letterhead) ---- */
+.print-doc__header {
+  display: flex;
+  align-items: center;
+  gap: 14pt;
+  padding-bottom: 10pt;
+  border-bottom: 2pt solid #0D6EFD;
+  margin-bottom: 10pt;
+}
+.print-doc__logo { height: 36pt; width: auto; }
+.print-doc__logo--placeholder {
+  font-family: 'Space Grotesk', Arial, sans-serif;
+  font-weight: 700;
+  font-size: 16pt;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+}
+.print-doc__company { flex: 1; }
+.print-doc__company h1 { font-size: 13pt; margin: 0 0 2pt; font-family: 'Space Grotesk', Arial, sans-serif; }
+.print-doc__company p { margin: 0; font-size: 9pt; color: #4A555E; }
+
+.print-doc__doc-meta { text-align: right; font-size: 9pt; }
+.print-doc__doc-meta h2 { font-size: 11pt; margin: 0 0 4pt; letter-spacing: 0.03em; color: #0D6EFD; }
+.print-doc__doc-meta p { margin: 0; color: #4A555E; }
+
+.print-doc__client {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4pt 24pt;
+  font-size: 9.5pt;
+  margin-bottom: 8pt;
+  padding-bottom: 8pt;
+  border-bottom: 0.75pt solid #E4E8EA;
+}
+.print-doc__client div { display: flex; justify-content: space-between; gap: 8pt; }
+.print-doc__client span { color: #4A555E; }
+
+.print-doc__payment-terms {
+  background: #FEF3C7;
+  border: 0.75pt solid #D97706;
+  border-radius: 3pt;
+  padding: 5pt 8pt;
+  font-size: 9pt;
+  margin-bottom: 8pt;
+}
+
+.print-doc__table-head-row--wide {
+  grid-template-columns: 24pt 78pt 1fr 90pt 60pt 40pt 75pt 75pt;
+}
+.print-doc__table-head-row {
+  display: grid;
+  gap: 6pt;
+  font-size: 8pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #FFFFFF;
+  background: #0D6EFD;
+  padding: 6pt 6pt;
+  border-bottom: 1pt solid #0D6EFD;
+}
+
+/* ---- Item rows ---- */
+.print-doc tbody td {
+  padding: 7pt 4pt;
+  border-bottom: 0.5pt solid #E4E8EA;
+  vertical-align: middle;
+  font-size: 9pt;
+}
+.print-doc__col-no { width: 24pt; text-align: center; }
+.print-doc__col-photo { width: 78pt; }
+.print-doc__col-num { width: 75pt; text-align: right; }
+.print-doc__line-detail { font-size: 8pt; color: #4A555E; margin-top: 2pt; }
+.print-doc__notes { font-size: 8.5pt; font-style: italic; color: #4A555E; margin-top: 2pt; }
+
+.print-doc__thumb {
+  width: 72pt;
+  height: 72pt;
+  object-fit: cover;
+  border-radius: 3pt;
+  border: 0.5pt solid #E4E8EA;
+  display: block;
+}
+.print-doc__thumb--empty {
+  background: #F6F7F8;
+}
+
+/* ---- Footer (totals + signature + page footer) ---- */
+/* QA FIX (item #5): wraps everything that used to be crammed into
+   <tfoot> (which repeats every printed page) — now a normal block after
+   </table> that appears once, and stays together on one page where
+   possible instead of splitting awkwardly across a page break. */
+.print-doc__end-block {
+  padding: 0 6pt;
+  page-break-inside: avoid;
+}
+
+.print-doc__summary {
+  width: 260pt;
+  margin-left: auto;
+  margin-top: 10pt;
+  font-size: 9.5pt;
+}
+.print-doc__summary > div { display: flex; justify-content: space-between; padding: 3pt 0; }
+.print-doc__summary-grand {
+  font-family: 'Space Grotesk', Arial, sans-serif;
+  font-weight: 700;
+  font-size: 12pt;
+  color: #0D6EFD;
+  border-top: 1.5pt solid #0D6EFD;
+  margin-top: 4pt;
+  padding-top: 6pt !important;
+}
+
+.print-doc__signature {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24pt;
+  margin-top: 28pt;
+  font-size: 9.5pt;
+  text-align: center;
+}
+.print-doc__sign-space { height: 46pt; }
+
+.print-doc__bank-info {
+  background: #E6EBF0;
+  border-radius: 3pt;
+  padding: 6pt 8pt;
+  font-size: 9.5pt;
+  font-weight: 700;
+  margin-top: 12pt;
+}
+
+.print-doc__terms {
+  margin-top: 12pt;
+  font-size: 8pt;
+  color: #1B2228;
+}
+.print-doc__terms strong { display: block; margin-bottom: 4pt; }
+.print-doc__terms ol,
+.print-doc__terms-extra {
+  margin: 0;
+  padding-left: 14pt;
+}
+.print-doc__terms li,
+.print-doc__terms-extra li {
+  margin-bottom: 2pt;
+  line-height: 1.4;
+}
+
+.print-doc__footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 3pt 12pt;
+  border-top: 1.5pt solid #0D6EFD;
+  margin-top: 16pt;
+  padding-top: 6pt;
+  font-size: 8pt;
+  color: #4A555E;
+}
+/* QA FIX round 2: was a single "Name · Address" line that could still
+   run long — now two stacked left-aligned lines (name, then address)
+   per Anto's request, each independently wrappable so neither collides
+   with the page-number on the right. */
+.print-doc__footer-company {
+  display: flex;
+  flex-direction: column;
+  gap: 1pt;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.print-doc__footer-company span:first-child { font-weight: 700; color: #1B2228; }
+.print-doc__page-number {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+.print-doc__page-number::after {
+  content: "Halaman " counter(page);
+}
+
+.mono { font-family: 'IBM Plex Mono', 'Courier New', monospace; }
+
+/* ============================================================
+   LOGIN GATE — ditambahkan supaya app bisa dipakai banyak user.
+   Sesuai desain mockup: panel hitam kiri, kartu terang kanan.
+   Pakai namespace "est-login-*" supaya tidak bentrok dengan class
+   apa pun yang sudah ada di file asli ini.
+   ============================================================ */
+.est-login-screen { position: fixed; inset: 0; display: flex; z-index: 3000; background: var(--bg-app); }
+.est-login-left {
+  width: 40%; background: #0A0A0A; color: #fff;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: var(--space-12); position: relative;
+}
+.est-login-brand-mark { font-family: var(--font-display); font-weight: 700; font-size: 42px; letter-spacing: 10px; margin-bottom: var(--space-3); }
+.est-login-tagline-top { font-style: italic; font-size: 18px; color: rgba(255,255,255,0.85); margin: 0; }
+.est-login-tagline-bottom { position: absolute; left: var(--space-12); bottom: var(--space-12); right: var(--space-12); font-style: italic; font-size: 16px; color: rgba(255,255,255,0.85); margin: 0; }
+.est-login-right { width: 60%; display: flex; align-items: center; justify-content: center; }
+.est-login-card { width: 380px; background: var(--bg-surface); border: 1px solid var(--border-default); border-radius: var(--radius-card); padding: var(--space-8); }
+.est-login-welcome { font-family: var(--font-display); font-size: 26px; font-weight: 700; margin: 0; color: var(--text-primary); }
+.est-login-subtitle { color: var(--text-secondary); font-size: 14px; margin: 6px 0 var(--space-6); }
+.est-login-input-group { display: flex; align-items: center; gap: var(--space-2); background: var(--bg-app); border: 1px solid var(--border-default); border-radius: var(--radius-control); padding: 12px 14px; margin-bottom: var(--space-3); }
+.est-login-input-group i { color: var(--text-secondary); font-size: 15px; }
+.est-login-input-group input { border: none; outline: none; flex: 1; background: transparent; font-size: 14px; color: var(--text-primary); font-family: var(--font-body); }
+.est-login-eye-toggle { background: none; border: none; color: var(--text-secondary); padding: 0; cursor: pointer; }
+.est-login-error { color: var(--accent-danger); font-size: 13px; min-height: 16px; margin: -6px 0 12px; }
+.est-login-submit-btn { width: 100%; padding: 14px; border: none; border-radius: var(--radius-control); background: #0A0A0A; color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; font-family: var(--font-body); }
+.est-login-submit-btn:hover { background: #1A1A1A; }
+.est-login-submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.est-login-footer { text-align: center; font-size: 12px; color: var(--text-secondary); margin-top: var(--space-6); margin-bottom: 0; }
+@media (max-width: 900px) {
+  .est-login-left { display: none; }
+  .est-login-right { width: 100%; }
+}
+
+/* Banner read-only Price Manager/Settings untuk role bukan super_admin */
+.est-readonly-banner {
+  background: var(--accent-primary-tint); color: var(--accent-primary);
+  border: 1px solid var(--accent-primary); border-radius: var(--radius-control);
+  padding: 10px 14px; font-size: 13px; margin-bottom: var(--space-4);
+}

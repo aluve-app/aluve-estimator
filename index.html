@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project Estimator — Aluve</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ============================================================
+     LOGIN VIEW
+     ============================================================ -->
+<div id="view-login" class="login-screen">
+  <div class="login-card">
+    <div class="login-logo">Aluve</div>
+    <h1 class="login-title">Project Estimator</h1>
+    <p class="login-subtitle">Masuk dengan akun estimator Anda</p>
+
+    <div class="field">
+      <label for="login-email">Email</label>
+      <input type="email" id="login-email" placeholder="nama@email.com" autocomplete="username">
+    </div>
+    <div class="field">
+      <label for="login-password">Password</label>
+      <input type="password" id="login-password" placeholder="Password" autocomplete="current-password">
+    </div>
+    <p id="login-error" class="login-error"></p>
+    <button id="btn-login" class="btn btn-primary btn-block" onclick="doLogin()">Masuk</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     APP SHELL (tersembunyi sampai berhasil login)
+     ============================================================ -->
+<div id="app" hidden>
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">Aluve<span>Estimator</span></div>
+    <nav class="sidebar-nav">
+      <button class="nav-item active" data-nav="queue" onclick="Router.go('queue')">
+        <span class="nav-icon">📋</span> Antrian Quotation
+      </button>
+      <button class="nav-item" data-nav="catalog" onclick="Router.go('catalog')">
+        <span class="nav-icon">📦</span> Katalog Harga
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-user-name" id="sidebar-user-name">-</div>
+        <div class="sidebar-user-role" id="sidebar-user-role">-</div>
+      </div>
+      <button class="btn-logout" onclick="doLogout()">Keluar</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+
+    <!-- ---------- VIEW: ANTRIAN QUOTATION ---------- -->
+    <section id="view-queue" class="view">
+      <div class="view-header">
+        <h1>Antrian Quotation</h1>
+        <button class="btn btn-primary" onclick="QueueView.openCreateModal()">+ Quotation Baru</button>
+      </div>
+
+      <div class="tabs" id="queue-tabs">
+        <button class="tab active" data-status="" onclick="QueueView.filterStatus('')">Semua</button>
+        <button class="tab" data-status="draft" onclick="QueueView.filterStatus('draft')">Draft</button>
+        <button class="tab" data-status="selesai_dihitung" onclick="QueueView.filterStatus('selesai_dihitung')">Selesai Dihitung</button>
+        <button class="tab" data-status="terkirim" onclick="QueueView.filterStatus('terkirim')">Terkirim</button>
+      </div>
+
+      <div id="queue-list" class="queue-list">
+        <p class="empty-state">Memuat data...</p>
+      </div>
+    </section>
+
+    <!-- ---------- VIEW: DETAIL QUOTATION ---------- -->
+    <section id="view-quotation-detail" class="view" hidden>
+      <div class="view-header">
+        <button class="btn-back" onclick="Router.go('queue')">&larr; Kembali ke Antrian</button>
+      </div>
+
+      <div class="detail-card">
+        <div class="detail-card-header">
+          <div>
+            <h1 id="detail-quotation-number">-</h1>
+            <p class="detail-subtitle">Revisi <span id="detail-revision">-</span> · Status: <span id="detail-status" class="status-badge">-</span></p>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="field">
+            <label>Nama Klien</label>
+            <input type="text" id="detail-client-name">
+          </div>
+          <div class="field">
+            <label>Nama Project</label>
+            <input type="text" id="detail-project-name">
+          </div>
+          <div class="field">
+            <label>Lokasi</label>
+            <input type="text" id="detail-location">
+          </div>
+          <div class="field">
+            <label>No. HP Klien</label>
+            <input type="text" id="detail-phone">
+          </div>
+          <div class="field field-wide">
+            <label>Catatan</label>
+            <textarea id="detail-notes" rows="3"></textarea>
+          </div>
+        </div>
+
+        <div class="items-placeholder">
+          <p><strong>Susun Item &amp; Kalkulator Harga</strong></p>
+          <p class="muted">Bagian input item, pilih SKU dari katalog, dan kalkulator harga otomatis akan menyusul di update berikutnya. Untuk sekarang, halaman ini menyimpan data dasar quotation dan menghubungkannya ke project Sales App.</p>
+        </div>
+
+        <div class="detail-actions">
+          <button class="btn btn-secondary" onclick="QuotationDetailView.save()">Simpan</button>
+          <button class="btn btn-primary" onclick="QuotationDetailView.markComplete()" disabled title="Butuh minimal 1 item — fitur item menyusul">Tandai Selesai Dihitung</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- VIEW: KATALOG HARGA (read-only untuk role estimator) ---------- -->
+    <section id="view-catalog" class="view" hidden>
+      <div class="view-header">
+        <h1>Katalog Harga</h1>
+      </div>
+      <p class="muted" style="padding: 0 4px 16px;">Tampilan baca saja. Hanya Super Admin yang bisa mengubah katalog (menyusul di Admin Console Manager Dashboard).</p>
+      <div id="catalog-content">
+        <p class="empty-state">Memuat data...</p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ============================================================
+     MODAL: Buat Quotation Manual
+     ============================================================ -->
+<div id="modal-create-quotation" class="modal-overlay" hidden>
+  <div class="modal-box">
+    <h2>Quotation Baru (Manual)</h2>
+    <p class="muted">Untuk klien yang belum tercatat di Sales App.</p>
+    <div class="field">
+      <label for="create-client-name">Nama Klien *</label>
+      <input type="text" id="create-client-name">
+    </div>
+    <div class="field">
+      <label for="create-project-name">Nama Project</label>
+      <input type="text" id="create-project-name">
+    </div>
+    <div class="field">
+      <label for="create-location">Lokasi</label>
+      <input type="text" id="create-location">
+    </div>
+    <p id="create-error" class="login-error"></p>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="QueueView.closeCreateModal()">Batal</button>
+      <button class="btn btn-primary" onclick="QueueView.submitCreate()">Buat</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

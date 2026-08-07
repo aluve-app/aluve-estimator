@@ -196,14 +196,17 @@ const QueueView = {
 };
 
 /* ============================================================
-   VIEW: DETAIL QUOTATION
+   VIEW: DETAIL QUOTATION (+ Item Builder & Kalkulator)
    ============================================================ */
 const QuotationDetailView = {
   current: null,
+  items: [], // working copy, disinkronkan ke this.current.items saat Save
 
   async open(quotationId) {
     Router.go('quotation-detail');
     State.currentQuotationId = quotationId;
+
+    await CatalogHelper.ensureLoaded();
 
     const result = await Api.call('readQuotation', { quotation_id: quotationId });
     if (!result.success) {
@@ -213,6 +216,7 @@ const QuotationDetailView = {
     }
 
     this.current = result.data;
+    this.items = Array.isArray(this.current.items) ? JSON.parse(JSON.stringify(this.current.items)) : [];
     this.render();
   },
 
@@ -230,27 +234,284 @@ const QuotationDetailView = {
     document.getElementById('detail-location').value = q.location || '';
     document.getElementById('detail-phone').value = q.customer_phone || '';
     document.getElementById('detail-notes').value = q.notes || '';
+
+    const pd = q.project_discount || { type: 'percent', value: '' };
+    document.getElementById('project-discount-type').value = pd.type || 'percent';
+    document.getElementById('project-discount-value').value = pd.value || '';
+
+    this.renderItems();
+    this.renderSummary();
   },
 
-  async save() {
+  addItem() {
+    this.items.push({
+      _uid: 'item-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+      label: 'Item ' + (this.items.length + 1),
+      width_mm: '', height_mm: '', qty: 1,
+      aluminium_lines: [], glass_lines: [], other_lines: [],
+      sealant_unit_price: 50000,
+      discount: { type: 'percent', value: '' }
+    });
+    this.renderItems();
+    this.renderSummary();
+  },
+
+  removeItem(uid) {
+    this.items = this.items.filter((it) => it._uid !== uid);
+    this.renderItems();
+    this.renderSummary();
+  },
+
+  findItem(uid) { return this.items.find((it) => it._uid === uid); },
+
+  updateItemField(uid, field, value) {
+    const item = this.findItem(uid);
+    if (!item) return;
+    item[field] = value;
+    this.renderSummary();
+    this.renderItemTotalsOnly(uid);
+  },
+
+  addLine(uid, category) {
+    const item = this.findItem(uid);
+    if (!item) return;
+    const key = category + '_lines';
+    item[key] = item[key] || [];
+    item[key].push({ sku_name: '', unit_price: 0, qty: '', uom: category === 'aluminium' ? 'meter_lari' : 'unit' });
+    this.renderItems();
+    this.renderSummary();
+  },
+
+  removeLine(uid, category, index) {
+    const item = this.findItem(uid);
+    if (!item) return;
+    item[category + '_lines'].splice(index, 1);
+    this.renderItems();
+    this.renderSummary();
+  },
+
+  setLineSku(uid, category, index, skuKey) {
+    const item = this.findItem(uid);
+    if (!item) return;
+    const line = item[category + '_lines'][index];
+    const sku = CatalogHelper.findByKey(skuKey);
+    if (sku) {
+      line.sku_name = sku.name;
+      line.unit_price = sku.harga_modal;
+      line.uom = sku.uom;
+    } else {
+      line.sku_name = ''; line.unit_price = 0; line.uom = category === 'aluminium' ? 'meter_lari' : 'unit';
+    }
+    this.renderItems();
+    this.renderSummary();
+  },
+
+  setLineQty(uid, category, index, qty) {
+    const item = this.findItem(uid);
+    if (!item) return;
+    item[category + '_lines'][index].qty = qty;
+    this.renderSummary();
+    this.renderItemTotalsOnly(uid);
+  },
+
+  renderItems() {
+    const container = document.getElementById('items-list');
+    if (this.items.length === 0) {
+      container.innerHTML = '<p class="empty-state">Belum ada item. Klik "+ Tambah Item" untuk mulai.</p>';
+      return;
+    }
+    container.innerHTML = this.items.map((item) => this.renderItemCard(item)).join('');
+  },
+
+  renderItemCard(item) {
+    const uid = item._uid;
+    const categories = [
+      { key: 'aluminium', label: 'Aluminium', options: CatalogHelper.aluminiumOptions() },
+      { key: 'glass', label: 'Kaca', options: CatalogHelper.flatOptions('glass') },
+      { key: 'other', label: 'Lain-lain', options: CatalogHelper.flatOptions('other') }
+    ];
+
+    const linesHtml = categories.map((cat) => {
+      const lines = item[cat.key + '_lines'] || [];
+      const rows = lines.map((line, idx) => `
+        <div class="line-row">
+          <select onchange="QuotationDetailView.setLineSku('${uid}','${cat.key}',${idx},this.value)">
+            <option value="">Pilih SKU...</option>
+            ${cat.options.map((o) => `<option value="${escapeHtml(o.key)}" ${o.name === line.sku_name ? 'selected' : ''}>${escapeHtml(o.name)} (${escapeHtml(o.uom)})</option>`).join('')}
+          </select>
+          <input type="number" min="0" step="0.01" placeholder="Qty" value="${line.qty || ''}" oninput="QuotationDetailView.setLineQty('${uid}','${cat.key}',${idx},this.value)">
+          <span class="line-price">${formatCurrency(line.unit_price)}</span>
+          <span class="line-subtotal">${formatCurrency(Calculator.calcLineSubtotal(line.unit_price, line.qty))}</span>
+          <button class="line-remove" onclick="QuotationDetailView.removeLine('${uid}','${cat.key}',${idx})"><i class="bi bi-trash"></i></button>
+        </div>`).join('');
+
+      return `
+        <div class="line-group">
+          <div class="line-group-header">
+            <span>${cat.label}</span>
+            <button class="btn-add-line" onclick="QuotationDetailView.addLine('${uid}','${cat.key}')">+ Baris</button>
+          </div>
+          ${rows || '<p class="line-empty">Belum ada baris.</p>'}
+        </div>`;
+    }).join('');
+
+    const totals = Calculator.calcItemTotals(item);
+
+    return `
+      <div class="item-card" id="item-card-${uid}">
+        <div class="item-card-header">
+          <input type="text" class="item-label-input" value="${escapeHtml(item.label)}" oninput="QuotationDetailView.updateItemField('${uid}','label',this.value)">
+          <button class="btn-remove-item" onclick="QuotationDetailView.removeItem('${uid}')"><i class="bi bi-trash"></i> Hapus Item</button>
+        </div>
+        <div class="item-meta-row">
+          <div class="field-inline"><label>Lebar (mm)</label><input type="number" value="${item.width_mm || ''}" oninput="QuotationDetailView.updateItemField('${uid}','width_mm',this.value)"></div>
+          <div class="field-inline"><label>Tinggi (mm)</label><input type="number" value="${item.height_mm || ''}" oninput="QuotationDetailView.updateItemField('${uid}','height_mm',this.value)"></div>
+          <div class="field-inline"><label>Qty Item</label><input type="number" min="1" value="${item.qty || 1}" oninput="QuotationDetailView.updateItemField('${uid}','qty',this.value)"></div>
+          <div class="field-inline"><label>Diskon Item</label>
+            <div class="discount-input-row">
+              <select onchange="QuotationDetailView.updateItemDiscount('${uid}','type',this.value)">
+                <option value="percent" ${item.discount && item.discount.type === 'percent' ? 'selected' : ''}>%</option>
+                <option value="nominal" ${item.discount && item.discount.type === 'nominal' ? 'selected' : ''}>Rp</option>
+              </select>
+              <input type="text" placeholder="cth: 10+5" value="${(item.discount && item.discount.value) || ''}" oninput="QuotationDetailView.updateItemDiscount('${uid}','value',this.value)">
+            </div>
+          </div>
+        </div>
+        ${linesHtml}
+        <div class="item-totals" id="item-totals-${uid}">${this.itemTotalsHtml(totals)}</div>
+      </div>`;
+  },
+
+  itemTotalsHtml(totals) {
+    return `
+      <div class="item-totals-row"><span>Aluminium</span><span>${formatCurrency(totals.aluminiumTotal)}</span></div>
+      <div class="item-totals-row"><span>Kaca</span><span>${formatCurrency(totals.glassTotal)}</span></div>
+      <div class="item-totals-row"><span>Lain-lain</span><span>${formatCurrency(totals.otherTotal)}</span></div>
+      <div class="item-totals-row"><span>Sealant (qty ${totals.sealantQty.toFixed(2)})</span><span>${formatCurrency(totals.sealantTotal)}</span></div>
+      ${totals.discountAmount > 0 ? `<div class="item-totals-row"><span>Diskon Item</span><span>-${formatCurrency(totals.discountAmount)}</span></div>` : ''}
+      <div class="item-totals-row item-totals-row--total"><span>Total / unit &times; ${totals.qty}</span><span>${formatCurrency(totals.itemTotal)}</span></div>`;
+  },
+
+  renderItemTotalsOnly(uid) {
+    const item = this.findItem(uid);
+    if (!item) return;
+    const el = document.getElementById('item-totals-' + uid);
+    if (el) el.innerHTML = this.itemTotalsHtml(Calculator.calcItemTotals(item));
+  },
+
+  updateItemDiscount(uid, field, value) {
+    const item = this.findItem(uid);
+    if (!item) return;
+    item.discount = item.discount || { type: 'percent', value: '' };
+    item.discount[field] = value;
+    this.renderSummary();
+    this.renderItemTotalsOnly(uid);
+  },
+
+  renderSummary() {
+    const projectDiscount = {
+      type: document.getElementById('project-discount-type').value,
+      value: document.getElementById('project-discount-value').value
+    };
+    const summary = Calculator.calcProjectSummary(this.items, projectDiscount);
+
+    document.getElementById('summary-rows').innerHTML = `
+      <div class="summary-row"><span>Subtotal Aluminium</span><span>${formatCurrency(summary.aluminiumSubtotal)}</span></div>
+      <div class="summary-row"><span>Subtotal Kaca</span><span>${formatCurrency(summary.glassSubtotal)}</span></div>
+      <div class="summary-row"><span>Subtotal Aksesoris/Sealant</span><span>${formatCurrency(summary.accessorySubtotal)}</span></div>
+      <div class="summary-row"><span>Total Diskon</span><span>-${formatCurrency(summary.totalDiscount)}</span></div>
+      <div class="summary-row summary-row--grand"><span>GRAND TOTAL</span><span>${formatCurrency(summary.grandTotalAfterDiscount)}</span></div>`;
+
+    document.getElementById('btn-mark-complete').disabled = this.items.length === 0;
+  },
+
+  buildItemsPayload() {
+    // Buang field internal "_uid" (cuma dipakai UI) sebelum dikirim ke backend
+    return this.items.map((item) => {
+      const clean = Object.assign({}, item);
+      delete clean._uid;
+      return clean;
+    });
+  },
+
+  async save(silent) {
     const payload = {
       quotation_id: State.currentQuotationId,
       client_name: document.getElementById('detail-client-name').value.trim(),
       project_name: document.getElementById('detail-project-name').value.trim(),
       location: document.getElementById('detail-location').value.trim(),
       customer_phone: document.getElementById('detail-phone').value.trim(),
-      notes: document.getElementById('detail-notes').value.trim()
+      notes: document.getElementById('detail-notes').value.trim(),
+      items: this.buildItemsPayload(),
+      project_discount: {
+        type: document.getElementById('project-discount-type').value,
+        value: document.getElementById('project-discount-value').value
+      }
     };
 
     const result = await Api.call('saveQuotation', payload);
-    if (!result.success) { Toast.show(result.message || 'Gagal menyimpan', 'error'); return; }
-    Toast.show('Quotation berhasil disimpan', 'success');
+    if (!result.success) { Toast.show(result.message || 'Gagal menyimpan', 'error'); return false; }
+    if (!silent) Toast.show('Quotation berhasil disimpan', 'success');
+    return true;
   },
 
   async markComplete() {
-    // Tombol ini sengaja dinonaktifkan (disabled) sampai fitur input item
-    // selesai dibangun — backend akan menolak kalau item masih kosong.
-    Toast.show('Fitur input item menyusul di update berikutnya.', 'error');
+    if (this.items.length === 0) { Toast.show('Tambahkan minimal 1 item dulu.', 'error'); return; }
+    const saved = await this.save(true);
+    if (!saved) return;
+
+    const result = await Api.call('markQuotationComplete', { quotation_id: State.currentQuotationId });
+    if (!result.success) { Toast.show(result.message || 'Gagal menandai selesai', 'error'); return; }
+    Toast.show('Quotation ditandai selesai — Sales App sudah diperbarui', 'success');
+    this.open(State.currentQuotationId);
+  }
+};
+
+/* ============================================================
+   CATALOG HELPER — cache katalog harga untuk dipakai Item Builder
+   ============================================================ */
+const CatalogHelper = {
+  data: null,
+  flatIndex: {}, // key -> { name, harga_modal, uom }
+
+  async ensureLoaded() {
+    if (this.data) return;
+    const result = await Api.call('readPriceCatalog', { business_id: State.user.business_id });
+    this.data = result.success ? result.data : { brand_tiers: {}, glass: { items: [] }, other: { items: [] } };
+    this.buildFlatIndex();
+  },
+
+  buildFlatIndex() {
+    this.flatIndex = {};
+    Object.entries(this.data.brand_tiers || {}).forEach(([tierKey, tier]) => {
+      (tier.groups || []).forEach((group) => {
+        (group.items || []).forEach((item, i) => {
+          const key = 'alu:' + tierKey + ':' + group.code + ':' + i;
+          this.flatIndex[key] = item;
+        });
+      });
+    });
+    ((this.data.glass && this.data.glass.items) || []).forEach((item, i) => { this.flatIndex['glass:' + i] = item; });
+    ((this.data.other && this.data.other.items) || []).forEach((item, i) => { this.flatIndex['other:' + i] = item; });
+  },
+
+  findByKey(key) { return this.flatIndex[key] || null; },
+
+  aluminiumOptions() {
+    const opts = [];
+    Object.entries(this.data.brand_tiers || {}).forEach(([tierKey, tier]) => {
+      (tier.groups || []).forEach((group) => {
+        (group.items || []).forEach((item, i) => {
+          opts.push({ key: 'alu:' + tierKey + ':' + group.code + ':' + i, name: (tier.label || tierKey) + ' — ' + group.name + ' — ' + item.name, uom: item.uom, harga_modal: item.harga_modal });
+        });
+      });
+    });
+    return opts;
+  },
+
+  flatOptions(section) {
+    const items = (this.data[section] && this.data[section].items) || [];
+    return items.map((item, i) => ({ key: section + ':' + i, name: item.name, uom: item.uom, harga_modal: item.harga_modal }));
   }
 };
 

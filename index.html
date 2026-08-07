@@ -136,14 +136,31 @@
           </div>
         </div>
 
-        <div class="items-placeholder">
-          <p><strong>Susun Item &amp; Kalkulator Harga</strong></p>
-          <p class="muted">Bagian input item, pilih SKU dari katalog, dan kalkulator harga otomatis akan menyusul di update berikutnya. Untuk sekarang, halaman ini menyimpan data dasar quotation dan menghubungkannya ke project Sales App.</p>
+        <div class="items-section">
+          <div class="items-section-header">
+            <h2>Item &amp; Harga</h2>
+            <button class="btn-secondary" onclick="QuotationDetailView.addItem()"><i class="bi bi-plus-lg"></i> Tambah Item</button>
+          </div>
+          <div id="items-list"></div>
+        </div>
+
+        <div class="summary-panel">
+          <div class="field" style="max-width: 320px;">
+            <label>Diskon Project (opsional)</label>
+            <div class="discount-input-row">
+              <select id="project-discount-type">
+                <option value="percent">%</option>
+                <option value="nominal">Rp</option>
+              </select>
+              <input type="text" id="project-discount-value" placeholder="cth: 10 atau 10+5">
+            </div>
+          </div>
+          <div id="summary-rows"></div>
         </div>
 
         <div class="detail-actions">
           <button class="btn-secondary" onclick="QuotationDetailView.save()">Simpan</button>
-          <button class="btn-primary" onclick="QuotationDetailView.markComplete()" disabled title="Butuh minimal 1 item — fitur item menyusul">Tandai Selesai Dihitung</button>
+          <button class="btn-primary" id="btn-mark-complete" onclick="QuotationDetailView.markComplete()" disabled title="Butuh minimal 1 item">Tandai Selesai Dihitung</button>
         </div>
       </div>
     </section>
@@ -193,6 +210,7 @@
 
 <script src="config.js"></script>
 <script src="api.js"></script>
+<script src="calculator.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

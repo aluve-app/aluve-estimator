@@ -608,6 +608,16 @@ h1, h2, h3, h4 { font-family: var(--font-display); color: var(--text-primary); m
 }
 .project-card__actions { display: flex; gap: 2px; }
 
+/* Badge "Dari Sales App" — ditambahkan supaya project yang otomatis
+   dibuat dari Sales App (Pipeline Stage "Perlu Estimasi Harga") mudah
+   dikenali di antara project lain. */
+.sales-origin-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em;
+  color: var(--accent-money); background: var(--color-brass-100);
+  padding: 3px 8px; border-radius: 999px; margin-bottom: 6px; width: fit-content;
+}
+
 /* Status chips */
 .status-chip {
   font-size: 12px;

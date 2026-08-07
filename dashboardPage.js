@@ -141,6 +141,7 @@ window.ALUVE.DashboardPage = (function () {
           '<h3 class="project-card__client">' + Helper.escapeHtml(project.clientName) + '</h3>' +
           '<span class="status-chip ' + statusClass + '">' + statusLabel + (isStaleLead(project) ? ' <span class="status-chip__dot" aria-hidden="true"></span>' : '') + '</span>' +
         '</div>' +
+        (project._salesProjectId ? '<span class="sales-origin-badge"><i class="bi bi-send"></i> Dari Sales App</span>' : '') +
         '<p class="project-card__meta">' + Helper.escapeHtml(project.projectName) + ' &middot; ' + Helper.escapeHtml(project.location || '-') + '</p>' +
         '<div class="project-card__bottom">' +
           '<span class="pill">' + project.items.length + ' item</span>' +
@@ -169,8 +170,17 @@ window.ALUVE.DashboardPage = (function () {
     gridEl.innerHTML = projects.map(projectCardHtml).join('');
   }
 
+  /** Project dari Sales App (_salesProjectId ada) ditaruh paling atas — supaya
+   *  Niken/Delvy langsung lihat yang perlu diprioritaskan, sisanya tetap
+   *  urut "terakhir diperbarui" seperti biasa. */
+  function bySalesOriginFirst(projects) {
+    return projects.slice().sort(function (a, b) {
+      return (b._salesProjectId ? 1 : 0) - (a._salesProjectId ? 1 : 0);
+    });
+  }
+
   function renderAll() {
-    const allProjects = Project.getAllProjects();
+    const allProjects = bySalesOriginFirst(Project.getAllProjects());
     renderStats(allProjects);
     renderEmptyOrGrid(dom.dashboardGrid, allProjects.slice(0, 6));
     renderProjectsPage();
@@ -180,7 +190,7 @@ window.ALUVE.DashboardPage = (function () {
     let projects = Project.searchProjects(dom.searchInput.value);
     const statusValue = dom.statusFilter.value;
     if (statusValue) projects = projects.filter(function (p) { return p.status === statusValue; });
-    renderEmptyOrGrid(dom.allProjectsGrid, projects);
+    renderEmptyOrGrid(dom.allProjectsGrid, bySalesOriginFirst(projects));
   }
 
   /* ----------------------------------------------------------

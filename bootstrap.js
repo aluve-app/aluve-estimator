@@ -75,6 +75,46 @@
       });
   }
 
+  /**
+   * PATCH BUG FIX: item katalog yang datang dari server (hasil migrasi)
+   * TIDAK punya field "id" — id itu normalnya baru dikasih oleh
+   * priceManager.js's buildCatalogFromSeed() saat seeding PERTAMA KALI
+   * dari masterData.js. Karena kita melewati proses seeding itu (catalog
+   * sudah langsung terisi dari server), item jadi tidak pernah dapat id
+   * sama sekali — akibatnya PriceManager.getItemById() selalu gagal,
+   * SKU yang dipilih di form Tambah Item selalu jadi Rp 0.
+   *
+   * Fungsi ini mereplikasi PERSIS logic buildCatalogFromSeed (assign id +
+   * lastUpdated + isActive ke tiap item) — dijalankan sekali saat
+   * bootstrap, SEBELUM window.__EST.catalog diisi, supaya seluruh app
+   * (yang tidak diubah sama sekali) bisa jalan seperti biasa.
+   */
+  function ensureCatalogItemIds(catalog) {
+    const Helper = window.ALUVE && window.ALUVE.Helper;
+    if (!Helper || !catalog) return { catalog: catalog, changed: false };
+
+    let changed = false;
+    function enrichItem(item) {
+      if (!item.id) {
+        item.id = Helper.generateId('sku');
+        item.lastUpdated = item.lastUpdated || new Date().toISOString();
+        item.isActive = item.isActive !== false;
+        changed = true;
+      }
+    }
+
+    Object.keys(catalog.brand_tiers || {}).forEach(function (tierKey) {
+      (catalog.brand_tiers[tierKey].groups || []).forEach(function (group) {
+        (group.items || []).forEach(enrichItem);
+      });
+    });
+    ((catalog.glass && catalog.glass.items) || []).forEach(enrichItem);
+    ((catalog.other && catalog.other.items) || []).forEach(enrichItem);
+    if (catalog.sealant && catalog.sealant.name) enrichItem(catalog.sealant);
+
+    return { catalog: catalog, changed: changed };
+  }
+
   async function bootstrapData(user) {
     window.__EST = window.__EST || {};
     window.__EST.user = user;
@@ -86,7 +126,25 @@
     ]);
 
     window.__EST.projects = projectsRes.success ? projectsRes.data : [];
-    window.__EST.catalog = catalogRes.success ? catalogRes.data : { brand_tiers: {}, glass: { items: [] }, other: { items: [] } };
+
+    const rawCatalog = catalogRes.success ? catalogRes.data : { brand_tiers: {}, glass: { items: [] }, other: { items: [] } };
+    const enrichResult = ensureCatalogItemIds(rawCatalog);
+    window.__EST.catalog = enrichResult.catalog;
+
+    // Kalau ada item yang baru dapat id (pertama kali sejak migrasi),
+    // simpan balik ke server supaya id-nya STABIL untuk semua user
+    // berikutnya (tidak berubah-ubah tiap login). Backend hanya
+    // mengizinkan super_admin — kalau yang login estimator biasa,
+    // percobaan simpan ini akan ditolak (403) dan dilewati diam-diam;
+    // id yang di-generate tadi tetap dipakai LOKAL untuk sesi ini saja.
+    if (enrichResult.changed) {
+      window.EstApi.call('updatePriceCatalog', {
+        business_id: user.business_id,
+        catalog: enrichResult.catalog,
+        change_summary: 'Migrasi otomatis: tambah id ke tiap item katalog'
+      }).catch(function () {});
+    }
+
     window.__EST.settings = settingsRes.success ? settingsRes.data : {};
   }
 

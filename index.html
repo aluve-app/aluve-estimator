@@ -1,216 +1,1024 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" data-theme="light">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Project Estimator — Aluve</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ALUVE Project Estimator</title>
+  <meta name="description" content="Internal project estimation tool for ALUVE aluminium & glass doors/windows.">
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <!-- Fonts: Space Grotesk (display), Inter (UI), IBM Plex Mono (data/measurement) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
-<link rel="stylesheet" href="style.css">
+  <!-- Bootstrap 5 (layout grid, modal/toast/offcanvas behavior) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css" rel="stylesheet">
+
+  <!-- Icons: Bootstrap Icons (thin-stroke line style matches design tokens) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+  <!-- App stylesheet (design tokens + component styles) -->
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<!-- ============================================================
-     LOGIN VIEW — sesuai desain mockup (panel hitam kiri + kartu kanan)
-     ============================================================ -->
-<div id="view-login" class="login-screen">
-  <div class="login-left">
-    <div class="login-brand-mark">ALUVE</div>
-    <p class="login-brand-tagline-top">Project Estimator App</p>
-    <p class="login-brand-tagline-bottom">Track Every Visit, Grow Every Project</p>
-  </div>
+  <!-- ============================================================
+       SKIP LINK — accessibility
+  ============================================================ -->
+  <a href="#main-content" class="skip-link">Lewati ke konten utama</a>
 
-  <div class="login-right">
-    <div class="login-card">
-      <h1 class="login-welcome">Welcome!</h1>
-      <p class="login-subtitle">Enter your credential login</p>
+  <!-- ============================================================
+       LOGIN GATE — ditambahkan supaya app ini bisa dipakai banyak
+       user (Niken, Delvy, dst), bukan cuma 1 device seperti versi
+       lokal aslinya. Desain sesuai mockup yang sudah disetujui.
+  ============================================================ -->
+  <div id="estLoginScreen" class="est-login-screen">
+    <div class="est-login-left">
+      <div class="est-login-brand-mark">ALUVE</div>
+      <p class="est-login-tagline-top">Project Estimator App</p>
+      <p class="est-login-tagline-bottom">Track Every Visit, Grow Every Project</p>
+    </div>
+    <div class="est-login-right">
+      <div class="est-login-card">
+        <h1 class="est-login-welcome">Welcome!</h1>
+        <p class="est-login-subtitle">Enter your credential login</p>
 
-      <div class="login-input-group">
-        <i class="bi bi-envelope"></i>
-        <input type="email" id="login-email" placeholder="Enter your email" autocomplete="username">
+        <div class="est-login-input-group">
+          <i class="bi bi-envelope"></i>
+          <input type="email" id="estLoginEmail" placeholder="Enter your email" autocomplete="username">
+        </div>
+        <div class="est-login-input-group">
+          <i class="bi bi-lock"></i>
+          <input type="password" id="estLoginPassword" placeholder="Enter your password" autocomplete="current-password">
+          <button type="button" class="est-login-eye-toggle" id="estLoginEyeToggle"><i class="bi bi-eye"></i></button>
+        </div>
+
+        <p id="estLoginError" class="est-login-error"></p>
+
+        <button id="estLoginBtn" class="est-login-submit-btn">Log in</button>
+
+        <p class="est-login-footer">ALUVE &copy; Copyright 2026. All Right Reserved</p>
       </div>
-      <div class="login-input-group">
-        <i class="bi bi-lock"></i>
-        <input type="password" id="login-password" placeholder="Enter your password" autocomplete="current-password">
-        <button type="button" class="login-eye-toggle" onclick="togglePasswordVisibility()"><i class="bi bi-eye" id="login-eye-icon"></i></button>
-      </div>
-
-      <div class="login-row-secondary">
-        <label class="login-remember"><input type="checkbox" id="login-remember"> Remember me</label>
-        <a href="#" class="login-forgot" onclick="event.preventDefault(); Toast.show('Hubungi Admin untuk reset password.');">Forgot password?</a>
-      </div>
-
-      <p id="login-error" class="login-error"></p>
-
-      <button id="btn-login" class="login-submit-btn" onclick="doLogin()">Log in</button>
-
-      <p class="login-footer">ALUVE &copy; Copyright 2026. All Right Reserved</p>
     </div>
   </div>
-</div>
 
-<!-- ============================================================
-     APP SHELL (tersembunyi sampai berhasil login)
-     ============================================================ -->
-<div id="app" hidden>
+  <!-- ============================================================
+       APP SHELL — tersembunyi sampai login berhasil (lihat bootstrap.js)
+  ============================================================ -->
+  <div id="estAppShell" hidden>
 
+  <!-- ============================================================
+       TOP NAVBAR
+  ============================================================ -->
   <header class="app-navbar">
-    <div class="app-navbar__brand">ALUVE <span>Estimator</span></div>
-    <div class="app-navbar__actions">
-      <span class="app-navbar__user-name" id="navbar-user-name">-</span>
-      <div class="app-navbar__avatar" id="navbar-user-initial">-</div>
-      <button class="app-navbar__logout" onclick="doLogout()" title="Keluar"><i class="bi bi-box-arrow-right"></i></button>
+    <div class="app-navbar__inner">
+
+      <button class="icon-btn app-navbar__menu-toggle" type="button"
+              data-bs-toggle="offcanvas" data-bs-target="#appSidebar"
+              aria-controls="appSidebar" aria-label="Buka menu navigasi">
+        <i class="bi bi-list"></i>
+      </button>
+
+      <a href="#" class="app-navbar__brand">
+        <span class="app-navbar__brand-mark" id="navbarBrandMark" aria-hidden="true"></span>
+        <img src="" alt="Logo ALUVE" class="app-navbar__brand-logo d-none" id="navbarBrandLogo">
+        <span class="app-navbar__brand-text">ALUVE<span class="app-navbar__brand-sub">Estimator</span></span>
+      </a>
+
+      <div class="app-navbar__search" id="navbarSearch">
+        <i class="bi bi-search" aria-hidden="true"></i>
+        <input type="search" placeholder="Cari project atau klien&hellip;" aria-label="Cari project atau klien">
+        <kbd class="app-navbar__search-kbd">&#8984;K</kbd>
+      </div>
+
+      <button class="icon-btn app-navbar__search-toggle" type="button" id="navbarSearchToggle" aria-label="Buka pencarian" aria-expanded="false">
+        <i class="bi bi-search"></i>
+      </button>
+
+      <div class="app-navbar__actions">
+        <button class="icon-btn" type="button" id="themeToggleBtn" aria-label="Ubah tema tampilan" title="Ubah tema tampilan">
+          <i class="bi bi-moon-stars" id="themeToggleIcon"></i>
+        </button>
+
+        <a href="#help" class="icon-btn" aria-label="Bantuan" title="Bantuan">
+          <i class="bi bi-question-circle"></i>
+        </a>
+
+        <div class="dropdown app-navbar__user">
+          <button class="app-navbar__avatar" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Menu akun">
+            AS
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li class="dropdown-header">Anto Sastra</li>
+            <li class="dropdown-header dropdown-header--sub">GM Operasional &middot; ALUVE</li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#settings"><i class="bi bi-gear me-2"></i>Pengaturan</a></li>
+            <li><a class="dropdown-item" href="#help"><i class="bi bi-life-preserver me-2"></i>Bantuan</a></li>
+          </ul>
+        </div>
+      </div>
+
     </div>
   </header>
 
-  <aside class="app-sidebar">
-    <nav class="app-sidebar__nav">
-      <button class="app-sidebar__link active" data-nav="queue" onclick="Router.go('queue')">
-        <i class="bi bi-clipboard-data"></i> Antrian Quotation
-      </button>
-      <button class="app-sidebar__link" data-nav="catalog" onclick="Router.go('catalog')">
-        <i class="bi bi-box-seam"></i> Katalog Harga
-      </button>
-    </nav>
-  </aside>
+  <!-- ============================================================
+       SIDEBAR — desktop: static column · mobile: Bootstrap offcanvas
+  ============================================================ -->
+  <div class="offcanvas-lg offcanvas-start app-sidebar" tabindex="-1" id="appSidebar" aria-labelledby="appSidebarLabel">
+    <div class="offcanvas-header d-lg-none">
+      <h2 class="offcanvas-title" id="appSidebarLabel">Navigasi</h2>
+      <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#appSidebar" aria-label="Tutup"></button>
+    </div>
+    <div class="offcanvas-body app-sidebar__body">
+      <nav class="app-sidebar__nav" aria-label="Navigasi utama">
+        <a class="app-sidebar__link is-active" href="#dashboard" data-page="dashboard">
+          <i class="bi bi-grid-1x2"></i><span>Dashboard</span>
+        </a>
+        <a class="app-sidebar__link" href="#projects" data-page="projects">
+          <i class="bi bi-folder2-open"></i><span>Semua Project</span>
+        </a>
+        <a class="app-sidebar__link" href="#project-detail" data-page="project-detail">
+          <i class="bi bi-file-earmark-ruled"></i><span>Detail Project</span>
+        </a>
+        <a class="app-sidebar__link" href="#price-manager" data-page="price-manager">
+          <i class="bi bi-tags"></i><span>Price Manager</span>
+        </a>
+        <div class="app-sidebar__divider" role="separator"></div>
+        <a class="app-sidebar__link" href="#settings" data-page="settings">
+          <i class="bi bi-gear"></i><span>Pengaturan</span>
+        </a>
+        <a class="app-sidebar__link" href="#help" data-page="help">
+          <i class="bi bi-life-preserver"></i><span>Bantuan</span>
+        </a>
+      </nav>
 
-  <main class="main-content">
+      <div class="app-sidebar__footer">
+        <div class="app-sidebar__badge">
+          <i class="bi bi-shield-check"></i>
+          <div>
+            <strong>Harga tersimpan lokal</strong>
+            <span>Backup terakhir: 15 Jul 2026</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-    <!-- ---------- VIEW: ANTRIAN QUOTATION ---------- -->
-    <section id="view-queue" class="view">
-      <div class="view-header">
-        <h1>Antrian Quotation</h1>
-        <button class="btn-primary" onclick="QueueView.openCreateModal()"><i class="bi bi-plus-lg"></i> Quotation Baru</button>
+  <!-- ============================================================
+       MAIN CONTENT
+  ============================================================ -->
+  <main id="main-content" class="app-main">
+
+    <!-- ============================================================
+         PAGE: DASHBOARD
+    ============================================================ -->
+    <section class="app-page is-active" id="page-dashboard" data-page-section="dashboard">
+      <div class="app-page__header">
+        <div>
+          <h1 class="app-page__title">Dashboard</h1>
+          <p class="app-page__subtitle">Ringkasan aktivitas estimasi project Anda.</p>
+        </div>
+        <button class="btn btn-primary btn-lg" type="button" data-bs-toggle="modal" data-bs-target="#modalNewProject">
+          <i class="bi bi-plus-lg"></i> Project Baru
+        </button>
       </div>
 
-      <div class="tabs" id="queue-tabs">
-        <button class="tab active" data-status="" onclick="QueueView.filterStatus('')">Semua</button>
-        <button class="tab" data-status="draft" onclick="QueueView.filterStatus('draft')">Draft</button>
-        <button class="tab" data-status="selesai_dihitung" onclick="QueueView.filterStatus('selesai_dihitung')">Selesai Dihitung</button>
-        <button class="tab" data-status="terkirim" onclick="QueueView.filterStatus('terkirim')">Terkirim</button>
+      <!-- Stat strip -->
+      <div class="stat-strip">
+        <div class="stat-strip__item">
+          <span class="stat-strip__icon"><i class="bi bi-folder2-open"></i></span>
+          <div>
+            <span class="stat-strip__value" data-stat="activeCount">0</span>
+            <span class="stat-strip__label">Project Aktif</span>
+          </div>
+        </div>
+        <div class="stat-strip__divider"></div>
+        <div class="stat-strip__item">
+          <span class="stat-strip__icon"><i class="bi bi-send"></i></span>
+          <div>
+            <span class="stat-strip__value" data-stat="sentCount">0</span>
+            <span class="stat-strip__label">Terkirim</span>
+          </div>
+        </div>
+        <div class="stat-strip__divider"></div>
+        <div class="stat-strip__item">
+          <span class="stat-strip__icon"><i class="bi bi-trophy"></i></span>
+          <div>
+            <span class="stat-strip__value" data-stat="wonCount">0</span>
+            <span class="stat-strip__label">Deal Won</span>
+          </div>
+        </div>
+        <div class="stat-strip__divider"></div>
+        <div class="stat-strip__item">
+          <span class="stat-strip__icon"><i class="bi bi-x-circle"></i></span>
+          <div>
+            <span class="stat-strip__value" data-stat="lostCount">0</span>
+            <span class="stat-strip__label">Batal</span>
+          </div>
+        </div>
+        <div class="stat-strip__divider"></div>
+        <div class="stat-strip__item">
+          <span class="stat-strip__icon"><i class="bi bi-cash-stack"></i></span>
+          <div>
+            <span class="stat-strip__value" data-stat="pipelineValue">Rp 0</span>
+            <span class="stat-strip__label">Total Nilai Pipeline</span>
+          </div>
+        </div>
+        <div class="stat-strip__divider"></div>
+        <button type="button" class="stat-strip__item stat-strip__item--attention stat-strip__item--clickable" id="staleStatCard" aria-label="Lihat project yang perlu ditindaklanjuti">
+          <span class="stat-strip__icon stat-strip__icon--attention"><i class="bi bi-alarm"></i></span>
+          <div>
+            <span class="stat-strip__value" data-stat="staleCount">0</span>
+            <span class="stat-strip__label">Perlu Ditindaklanjuti</span>
+          </div>
+        </button>
       </div>
 
-      <div id="queue-list" class="queue-list">
-        <p class="empty-state">Memuat data...</p>
+      <!-- Needs Follow-up — surfaces projects sitting untouched in "Sent" status 7+
+           days, matching the escalation pattern already used for the sales pipeline -->
+      <div class="app-section d-none" id="followupSection">
+        <div class="app-section__header">
+          <h2><i class="bi bi-alarm text-warning-emphasis"></i> Perlu Ditindaklanjuti</h2>
+        </div>
+        <div id="followupList"><!-- Rendered dynamically by dashboardPage.js --></div>
+      </div>
+
+      <!-- Recent projects -->
+      <div class="app-section">
+        <div class="app-section__header">
+          <h2>Project Terbaru</h2>
+          <a href="#projects" data-page="projects" class="app-section__link">Lihat semua &rarr;</a>
+        </div>
+
+        <div class="project-grid" id="dashboardRecentProjects">
+          <!-- Rendered dynamically by dashboardPage.js from real saved projects -->
+        </div>
+      </div>
+
+      <!-- Empty state template (hidden — reference markup for when project list is empty) -->
+      <div class="empty-state d-none" id="templateEmptyState">
+        <svg class="empty-state__glyph" viewBox="0 0 160 40" aria-hidden="true">
+          <line x1="8" y1="20" x2="152" y2="20" stroke="currentColor" stroke-width="1.5"/>
+          <line x1="8" y1="12" x2="8" y2="28" stroke="currentColor" stroke-width="1.5"/>
+          <line x1="152" y1="12" x2="152" y2="28" stroke="currentColor" stroke-width="1.5"/>
+          <text x="80" y="14" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="currentColor">0</text>
+        </svg>
+        <h3>Belum ada project</h3>
+        <p>Mulai estimasi pertama Anda &mdash; hanya butuh sekitar dua menit.</p>
+        <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#modalNewProject">
+          <i class="bi bi-plus-lg"></i> Project Baru
+        </button>
+      </div>
+
+      <!-- Loading skeleton template (hidden — reference markup for first-load state) -->
+      <div class="project-grid d-none" id="templateSkeleton">
+        <div class="project-card project-card--skeleton" aria-hidden="true">
+          <div class="skeleton-line skeleton-line--w60"></div>
+          <div class="skeleton-line skeleton-line--w40"></div>
+          <div class="skeleton-line skeleton-line--w80"></div>
+        </div>
+        <div class="project-card project-card--skeleton" aria-hidden="true">
+          <div class="skeleton-line skeleton-line--w60"></div>
+          <div class="skeleton-line skeleton-line--w40"></div>
+          <div class="skeleton-line skeleton-line--w80"></div>
+        </div>
+        <div class="project-card project-card--skeleton" aria-hidden="true">
+          <div class="skeleton-line skeleton-line--w60"></div>
+          <div class="skeleton-line skeleton-line--w40"></div>
+          <div class="skeleton-line skeleton-line--w80"></div>
+        </div>
       </div>
     </section>
 
-    <!-- ---------- VIEW: DETAIL QUOTATION ---------- -->
-    <section id="view-quotation-detail" class="view" hidden>
-      <div class="view-header">
-        <button class="btn-back" onclick="Router.go('queue')"><i class="bi bi-arrow-left"></i> Kembali ke Antrian</button>
+    <!-- ============================================================
+         PAGE: PROJECT DETAIL (Item Cards + Sticky Summary)
+    ============================================================ -->
+    <section class="app-page" id="page-project-detail" data-page-section="project-detail">
+
+      <div class="app-page__header app-page__header--editable">
+        <div>
+          <div class="editable-title">
+            <h1 class="app-page__title" id="projectDetailTitle">&mdash;</h1>
+            <button class="icon-btn icon-btn--sm editable-title__pencil" type="button" id="projectDetailEditBtn" aria-label="Ubah nama project">
+              <i class="bi bi-pencil"></i>
+            </button>
+          </div>
+          <p class="app-page__subtitle" id="projectDetailSubtitle">&nbsp;</p>
+          <p class="app-page__subtitle">
+            <strong>No. Quotation:</strong> <span id="projectDetailQuotationNumber">&mdash;</span>
+            <button class="icon-btn icon-btn--sm" type="button" id="projectDetailEditQuotationBtn" aria-label="Ubah nomor quotation" title="Ubah nomor quotation">
+              <i class="bi bi-pencil"></i>
+            </button>
+          </p>
+        </div>
+        <div class="d-flex gap-2">
+          <div class="dropdown">
+            <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="projectDetailStatusBtn" data-bs-toggle="dropdown" aria-expanded="false">
+              <span class="status-chip status-chip--draft" id="projectDetailStatusChip">Draft</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="projectDetailStatusBtn">
+              <li><a class="dropdown-item" href="#" data-set-status="draft"><span class="status-chip status-chip--draft">Draft</span></a></li>
+              <li><a class="dropdown-item" href="#" data-set-status="sent"><span class="status-chip status-chip--sent">Terkirim</span></a></li>
+              <li><a class="dropdown-item" href="#" data-set-status="won"><span class="status-chip status-chip--won">Deal / Won</span></a></li>
+              <li><a class="dropdown-item" href="#" data-set-status="lost"><span class="status-chip status-chip--lost">Batal</span></a></li>
+            </ul>
+          </div>
+          <button class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#modalExport">
+            <i class="bi bi-file-earmark-arrow-down"></i> Export Estimasi
+          </button>
+        </div>
       </div>
 
-      <div class="detail-card">
-        <div class="detail-card-header">
-          <div>
-            <h1 id="detail-quotation-number">-</h1>
-            <p class="detail-subtitle">Revisi <span id="detail-revision">-</span> &middot; Status: <span id="detail-status" class="status-badge">-</span></p>
+      <div class="project-detail-layout">
+
+        <!-- Item list column -->
+        <div class="project-detail-layout__items">
+
+          <button class="btn-add-item" type="button" data-bs-toggle="modal" data-bs-target="#modalItemEditor" id="addItemBtn">
+            <i class="bi bi-plus-lg"></i> Tambah Item
+          </button>
+
+          <div id="itemCardList">
+            <!-- Item Cards rendered dynamically by projectDetailPage.js -->
           </div>
+
+          <div class="empty-state d-none" id="itemListEmptyState">
+            <h3>Belum ada item</h3>
+            <p>Tambahkan bukaan pertama (pintu/jendela) untuk project ini.</p>
+          </div>
+
         </div>
 
-        <div class="form-grid">
-          <div class="field">
-            <label>Nama Klien</label>
-            <input type="text" id="detail-client-name">
-          </div>
-          <div class="field">
-            <label>Nama Project</label>
-            <input type="text" id="detail-project-name">
-          </div>
-          <div class="field">
-            <label>Lokasi</label>
-            <input type="text" id="detail-location">
-          </div>
-          <div class="field">
-            <label>No. HP Klien</label>
-            <input type="text" id="detail-phone">
-          </div>
-          <div class="field field-wide">
-            <label>Catatan</label>
-            <textarea id="detail-notes" rows="3"></textarea>
-          </div>
-        </div>
+        <!-- Sticky sidebar summary (desktop) -->
+        <aside class="project-summary project-summary--sidebar">
+          <h2 class="project-summary__title">Ringkasan Project</h2>
 
-        <div class="items-section">
-          <div class="items-section-header">
-            <h2>Item &amp; Harga</h2>
-            <button class="btn-secondary" onclick="QuotationDetailView.addItem()"><i class="bi bi-plus-lg"></i> Tambah Item</button>
+          <!-- Internal-only cost breakdown (per Anto's request #6) — never
+               shown in the customer-facing PDF/Print, only here. -->
+          <div class="project-summary__row project-summary__row--sub">
+            <span>Aluminium</span>
+            <span class="mono" id="summarySubtotalAluminium">Rp 0</span>
           </div>
-          <div id="items-list"></div>
-        </div>
+          <div class="project-summary__row project-summary__row--sub">
+            <span>Kaca</span>
+            <span class="mono" id="summarySubtotalKaca">Rp 0</span>
+          </div>
+          <div class="project-summary__row project-summary__row--sub">
+            <span>Aksesoris</span>
+            <span class="mono" id="summarySubtotalAksesoris">Rp 0</span>
+          </div>
+          <div class="project-summary__divider"></div>
 
-        <div class="summary-panel">
-          <div class="field" style="max-width: 320px;">
-            <label>Diskon Project (opsional)</label>
-            <div class="discount-input-row">
-              <select id="project-discount-type">
-                <option value="percent">%</option>
-                <option value="nominal">Rp</option>
-              </select>
-              <input type="text" id="project-discount-value" placeholder="cth: 10 atau 10+5">
+          <div class="project-summary__row">
+            <span>Grand Total Normal</span>
+            <span class="mono" id="summaryGrandTotalNormal">Rp 0</span>
+          </div>
+          <div class="project-summary__divider"></div>
+          <div class="project-summary__row project-summary__row--discount">
+            <span>Total Diskon</span>
+            <span class="mono" id="summaryTotalDiscount">Rp 0</span>
+          </div>
+
+          <!-- Project-level discount form — layered on top of item-level
+               discounts, per Calculator.calcProjectSummary()'s
+               projectDiscount parameter (per Anto's request #7). -->
+          <div class="project-summary__discount-form">
+            <label class="form-label" for="projectDiscountValue">Diskon Project</label>
+            <div class="input-group input-group-sm">
+              <div class="segmented-control segmented-control--sm" role="group" aria-label="Jenis diskon project" id="projectDiscountType">
+                <button type="button" class="is-active" data-value="percent">%</button>
+                <button type="button" data-value="nominal">Rp</button>
+              </div>
+              <input type="text" inputmode="text" class="form-control form-control--mono" id="projectDiscountValue" placeholder="cth: 20 atau 20+10">
+              <button class="btn btn-outline-primary" type="button" id="projectDiscountApplyBtn">Terapkan</button>
+            </div>
+            <p class="text-muted small mb-0 mt-1">Bisa ditulis berlapis, cth "20+10" = 20% dulu, lalu sisa dipotong 10% lagi.</p>
+          </div>
+
+          <div class="project-summary__divider project-summary__divider--heavy"></div>
+          <div class="project-summary__row project-summary__row--grand">
+            <span>Grand Total</span>
+            <span class="mono" id="summaryGrandTotalAfterDiscount">Rp 0</span>
+          </div>
+          <button class="btn btn-primary w-100" type="button" data-bs-toggle="modal" data-bs-target="#modalExport">
+            <i class="bi bi-file-earmark-arrow-down"></i> Export Estimasi
+          </button>
+        </aside>
+
+      </div>
+    </section>
+
+    <!-- ============================================================
+         PAGE: ALL PROJECTS (list/filter view)
+    ============================================================ -->
+    <section class="app-page" id="page-projects" data-page-section="projects">
+      <div class="app-page__header">
+        <div>
+          <h1 class="app-page__title">Semua Project</h1>
+          <p class="app-page__subtitle">Cari dan lanjutkan pengerjaan project.</p>
+        </div>
+        <button class="btn btn-primary btn-lg" type="button" data-bs-toggle="modal" data-bs-target="#modalNewProject">
+          <i class="bi bi-plus-lg"></i> Project Baru
+        </button>
+      </div>
+
+      <div class="filter-bar">
+        <div class="filter-bar__search">
+          <i class="bi bi-search"></i>
+          <input type="search" placeholder="Cari nama klien atau project&hellip;" id="allProjectsSearchInput">
+        </div>
+        <select class="form-select filter-bar__select" id="allProjectsStatusFilter">
+          <option value="">Semua Status</option>
+          <option value="draft">Draft</option>
+          <option value="sent">Terkirim</option>
+          <option value="won">Deal</option>
+          <option value="lost">Batal</option>
+        </select>
+      </div>
+
+      <div class="project-grid" id="allProjectsGrid">
+        <!-- Rendered dynamically by dashboardPage.js -->
+      </div>
+    </section>
+
+    <!-- ============================================================
+         PAGE: PRICE MANAGER
+    ============================================================ -->
+    <section class="app-page" id="page-price-manager" data-page-section="price-manager">
+      <div class="app-page__header">
+        <div>
+          <h1 class="app-page__title">Price Manager</h1>
+          <p class="app-page__subtitle">Kelola harga modal komponen. Perubahan tercatat otomatis.</p>
+        </div>
+      </div>
+
+      <div class="stale-price-banner d-none" data-pm="staleBanner">
+        <i class="bi bi-info-circle"></i>
+        <span data-pm="staleText"></span>
+      </div>
+
+      <div class="price-manager-layout">
+        <nav class="price-manager-layout__rail" aria-label="Kategori harga" data-pm="rail">
+          <!-- Rendered dynamically by priceManagerPage.js from the real catalog -->
+        </nav>
+
+        <div class="price-manager-layout__table-wrap">
+          <table class="price-table">
+            <thead>
+              <tr>
+                <th>Nama Komponen</th>
+                <th>Satuan</th>
+                <th class="text-end">Harga Modal</th>
+                <th>Terakhir Diperbarui</th>
+                <th class="text-center">Aktif</th>
+              </tr>
+            </thead>
+            <tbody data-pm="tableBody">
+              <!-- Rendered dynamically by priceManagerPage.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         PAGE: SETTINGS
+    ============================================================ -->
+    <section class="app-page" id="page-settings" data-page-section="settings">
+      <div class="app-page__header">
+        <div>
+          <h1 class="app-page__title">Pengaturan</h1>
+          <p class="app-page__subtitle">Informasi perusahaan dan preferensi default.</p>
+        </div>
+      </div>
+
+      <div class="settings-form">
+        <fieldset class="settings-group">
+          <legend>Informasi Perusahaan (untuk kop Export PDF &amp; Print)</legend>
+          <div class="mb-3">
+            <label class="form-label" for="field-logoFile">Logo</label>
+            <input type="file" class="form-control" accept="image/*" data-settings="logoFile" id="field-logoFile">
+            <img src="" alt="Pratinjau logo" class="d-none mt-2" style="height:48px" data-settings="logoPreview">
+          </div>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label" for="field-companyName">Nama Perusahaan</label>
+              <input type="text" class="form-control" data-settings="companyName" id="field-companyName">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="field-companyPhone">Telepon</label>
+              <input type="text" class="form-control" data-settings="companyPhone" id="field-companyPhone">
+            </div>
+            <div class="col-12">
+              <label class="form-label" for="field-companyAddress">Alamat</label>
+              <input type="text" class="form-control" data-settings="companyAddress" id="field-companyAddress">
             </div>
           </div>
-          <div id="summary-rows"></div>
-        </div>
+        </fieldset>
 
-        <div class="detail-actions">
-          <button class="btn-secondary" onclick="QuotationDetailView.save()">Simpan</button>
-          <button class="btn-primary" id="btn-mark-complete" onclick="QuotationDetailView.markComplete()" disabled title="Butuh minimal 1 item">Tandai Selesai Dihitung</button>
-        </div>
+        <fieldset class="settings-group">
+          <legend>Default Operasional</legend>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label" for="field-defaultSalesRep">Nama Sales Rep Default</label>
+              <input type="text" class="form-control" data-settings="defaultSalesRep" id="field-defaultSalesRep">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="field-discountCeiling">Batas Diskon (%)</label>
+              <input type="number" class="form-control" min="0" max="100" data-settings="discountCeiling" id="field-discountCeiling">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="field-staleThreshold">Peringatan Harga Usang (hari)</label>
+              <input type="number" class="form-control" min="1" data-settings="staleThreshold" id="field-staleThreshold">
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="settings-group">
+          <legend>Tampilan</legend>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label" for="field-themeSelect">Tema</label>
+              <select class="form-select" data-settings="themeSelect" id="field-themeSelect">
+                <option value="system">Ikuti Sistem</option>
+                <option value="light">Terang</option>
+                <option value="dark">Gelap</option>
+              </select>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="settings-group">
+          <legend>Penawaran Harga (muncul otomatis di tiap Export PDF/Print)</legend>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label" for="field-bankAccountInfo">Info Rekening Bank</label>
+              <input type="text" class="form-control" data-settings="bankAccountInfo" id="field-bankAccountInfo" placeholder="cth: BCA an PT Global Buana Perkasa ac 000-000-0000">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="field-paymentTerms">Termin Pembayaran</label>
+              <input type="text" class="form-control" data-settings="paymentTerms" id="field-paymentTerms" placeholder="cth: DP 50%, MOS 40%, 10% Setelah Instalasi">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="field-quotationValidityDays">Masa Berlaku Penawaran (hari)</label>
+              <input type="number" class="form-control" min="1" data-settings="quotationValidityDays" id="field-quotationValidityDays">
+            </div>
+            <div class="col-12">
+              <label class="form-label" for="field-termsAndConditions">Syarat &amp; Ketentuan <span class="text-muted">(satu poin per baris, otomatis diberi nomor)</span></label>
+              <textarea class="form-control" rows="6" data-settings="termsAndConditions" id="field-termsAndConditions" placeholder="Pintu dan jendela Aluminium menggunakan profil merek ALUVE&#10;Harga sudah termasuk instalasi &amp; Aksesoris&#10;Waktu preorder produksi barang &#177; 1 bulan sejak diterimanya ukuran fix di lapangan&#10;Harga sudah termasuk PPN 11%"></textarea>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="settings-group">
+          <legend>Integrasi Google Sheet</legend>
+          <div class="row g-3">
+            <div class="col-md-8">
+              <label class="form-label" for="field-sheetWebhookUrl">Google Apps Script Web App URL</label>
+              <input type="url" class="form-control" data-settings="sheetWebhookUrl" id="field-sheetWebhookUrl" placeholder="https://script.google.com/macros/s/XXXXXXXX/exec">
+              <div class="form-text">Setiap project dibuat/diupdate (termasuk perubahan status) akan otomatis dikirim ke Google Sheet ini sebagai backup. Kosongkan untuk menonaktifkan.</div>
+            </div>
+            <div class="col-md-4">
+              <span class="text-muted small" data-settings="sheetSyncQueueLabel"></span>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="settings-group">
+          <legend>Data</legend>
+          <div class="d-flex gap-2 flex-wrap align-items-center">
+            <button class="btn btn-outline-secondary" type="button" data-settings="backupBtn"><i class="bi bi-download"></i> Backup Semua Project (.json)</button>
+            <label class="btn btn-outline-secondary mb-0">
+              <i class="bi bi-upload"></i> Restore dari Backup
+              <input type="file" accept="application/json" class="d-none" data-settings="restoreInput">
+            </label>
+            <button class="btn btn-outline-secondary" type="button" data-settings="exportAllProjectsBtn"><i class="bi bi-file-earmark-excel"></i> Export Semua Project ke Excel</button>
+            <span class="text-muted small ms-auto" data-settings="lastBackupLabel">Belum pernah backup</span>
+          </div>
+        </fieldset>
+
+        <button class="btn btn-primary" type="button" data-settings="saveBtn">Simpan Perubahan</button>
       </div>
     </section>
 
-    <!-- ---------- VIEW: KATALOG HARGA (read-only untuk role estimator) ---------- -->
-    <section id="view-catalog" class="view" hidden>
-      <div class="view-header">
-        <h1>Katalog Harga</h1>
+    <!-- ============================================================
+         PAGE: HELP
+    ============================================================ -->
+    <section class="app-page" id="page-help" data-page-section="help">
+      <div class="app-page__header">
+        <div>
+          <h1 class="app-page__title">Bantuan</h1>
+          <p class="app-page__subtitle">Jawaban cepat untuk pertanyaan yang sering muncul.</p>
+        </div>
       </div>
-      <p class="muted" style="padding: 0 4px 16px;">Tampilan baca saja. Hanya Super Admin yang bisa mengubah katalog (menyusul di Admin Console Manager Dashboard).</p>
-      <div id="catalog-content">
-        <p class="empty-state">Memuat data...</p>
+
+      <div class="accordion" id="helpAccordion">
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#help1">
+              Kenapa total sealant saya 0?
+            </button>
+          </h2>
+          <div id="help1" class="accordion-collapse collapse show" data-bs-parent="#helpAccordion">
+            <div class="accordion-body">Sealant saat ini adalah input manual per item. Pastikan Anda mengisi kuantitas di bagian Sealant pada setiap item.</div>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#help2">
+              Bagaimana cara menduplikat item?
+            </button>
+          </h2>
+          <div id="help2" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+            <div class="accordion-body">Buka menu titik tiga di kanan atas kartu item, lalu pilih Duplikat.</div>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#help3">
+              Di mana saya bisa mengubah harga?
+            </button>
+          </h2>
+          <div id="help3" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+            <div class="accordion-body">Buka menu Price Manager di sidebar, lalu klik langsung pada sel harga yang ingin diubah.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="help-contact">
+        Masih bingung? <a href="#">Hubungi Anto langsung</a>
       </div>
     </section>
 
   </main>
-</div>
 
-<!-- ============================================================
-     MODAL: Buat Quotation Manual
-     ============================================================ -->
-<div id="modal-create-quotation" class="modal-overlay" hidden>
-  <div class="modal-box">
-    <h2>Quotation Baru (Manual)</h2>
-    <p class="muted">Untuk klien yang belum tercatat di Sales App.</p>
-    <div class="field">
-      <label for="create-client-name">Nama Klien *</label>
-      <input type="text" id="create-client-name">
-    </div>
-    <div class="field">
-      <label for="create-project-name">Nama Project</label>
-      <input type="text" id="create-project-name">
-    </div>
-    <div class="field">
-      <label for="create-location">Lokasi</label>
-      <input type="text" id="create-location">
-    </div>
-    <p id="create-error" class="login-error"></p>
-    <div class="modal-actions">
-      <button class="btn-secondary" onclick="QueueView.closeCreateModal()">Batal</button>
-      <button class="btn-primary" onclick="QueueView.submitCreate()">Buat</button>
+  <!-- ============================================================
+       MODAL: NEW PROJECT
+  ============================================================ -->
+  <div class="modal fade" id="modalNewProject" tabindex="-1" aria-labelledby="modalNewProjectLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title" id="modalNewProjectLabel">Project Baru</h2>
+          <!-- title/submit-button text are swapped between "Project Baru" and
+               "Edit Project" by DashboardPage.openEditProjectModal() -->
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+        </div>
+        <div class="modal-body">
+          <form novalidate>
+            <div class="mb-3">
+              <label class="form-label" for="newProjectQuotationNumber">No. Quotation <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" required placeholder="cth: BRI-ALU/2026/6/361" id="newProjectQuotationNumber">
+              <p class="text-muted small mb-0 mt-1">Wajib diisi manual &mdash; dipakai sebagai nomor resmi di Export PDF &amp; Print.</p>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="newProjectDate">Tanggal</label>
+              <input type="date" class="form-control" id="newProjectDate">
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="newProjectClientName">Nama Klien <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" required placeholder="cth: Pak Vincent" id="newProjectClientName">
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="newProjectName">Nama Project</label>
+              <input type="text" class="form-control" placeholder="Default: Untitled &mdash; [Nama Klien]" id="newProjectName">
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="newProjectLocation">Lokasi</label>
+              <input type="text" class="form-control" placeholder="cth: BSD City" id="newProjectLocation">
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="newProjectCustomerPhone">No. Telepon Klien</label>
+              <input type="tel" class="form-control" placeholder="cth: 0812-8800-3477" id="newProjectCustomerPhone">
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="newProjectSalesRep">Sales Rep</label>
+              <input type="text" class="form-control" value="Anto Sastra" id="newProjectSalesRep">
+            </div>
+            <div class="mb-0">
+              <label class="form-label" for="newProjectLeadSource">Asal Leads</label>
+              <select class="form-select" id="newProjectLeadSource">
+                <option value="">- Pilih -</option>
+                <option value="ads">Ads (Meta/Google)</option>
+                <option value="canvasing">Canvasing</option>
+                <option value="referral">Referral</option>
+                <option value="organic">Website/Organic</option>
+                <option value="event">Pameran (IBT, dll)</option>
+                <option value="walkin">Showroom Walk-in</option>
+                <option value="other">Lainnya</option>
+              </select>
+              <input type="text" class="form-control mt-2 d-none" id="newProjectLeadSourceOther" placeholder="Sebutkan sumber leads">
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Batal</button>
+          <button type="button" class="btn btn-primary" id="newProjectSubmitBtn">Buat Project &amp; Tambah Item Pertama &rarr;</button>
+        </div>
+      </div>
     </div>
   </div>
-</div>
 
-<div id="toast" class="toast"></div>
+  <!-- ============================================================
+       MODAL: ITEM EDITOR (mobile full-sheet variant handled via CSS)
+  ============================================================ -->
+  <div class="modal fade" id="modalItemEditor" tabindex="-1" aria-labelledby="modalItemEditorLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg modal-fullscreen-sm-down">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title" id="modalItemEditorLabel">Tambah Item</h2>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+        </div>
+        <div class="modal-body">
+          <form novalidate>
+            <div class="mb-3">
+              <label class="form-label" for="itemEditorLabel">Nama Item (opsional)</label>
+              <input type="text" class="form-control" id="itemEditorLabel" placeholder="cth: Jendela Swing YN70, Kusen A">
+            </div>
 
-<script src="config.js"></script>
-<script src="api.js"></script>
-<script src="calculator.js"></script>
-<script src="app.js"></script>
+            <div class="row g-2 mb-3">
+              <div class="col-sm-3">
+                <label class="form-label" for="itemEditorQty">Qty (unit)</label>
+                <input type="number" class="form-control form-control--mono" id="itemEditorQty" min="1" step="1" value="1">
+              </div>
+              <div class="col-sm-3">
+                <label class="form-label" for="itemEditorWidth">Lebar (mm)</label>
+                <input type="number" class="form-control form-control--mono" id="itemEditorWidth" placeholder="cth: 800">
+              </div>
+              <div class="col-sm-3">
+                <label class="form-label" for="itemEditorHeight">Tinggi (mm)</label>
+                <input type="number" class="form-control form-control--mono" id="itemEditorHeight" placeholder="cth: 2100">
+              </div>
+              <div class="col-sm-3">
+                <label class="form-label" for="itemEditorPhoto">Foto Item</label>
+                <input type="file" accept="image/*" class="form-control" id="itemEditorPhoto">
+              </div>
+              <div class="col-12">
+                <img src="" alt="Pratinjau foto item" class="d-none" id="itemEditorPhotoPreview" style="height:60px; border-radius:6px;">
+              </div>
+            </div>
+            <p class="text-muted small mb-3">Lebar &amp; Tinggi hanya informasi tampilan &mdash; tidak memengaruhi perhitungan harga.</p>
+
+            <h4 class="item-section__label">Aluminium</h4>
+            <div class="row g-2 mb-2">
+              <div class="col-sm-6">
+                <label class="form-label" for="itemEditorTier">Tier</label>
+                <select class="form-select" id="itemEditorTier">
+                  <option value="">Pilih tier&hellip;</option>
+                </select>
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label" for="itemEditorSeries">Series</label>
+                <select class="form-select" id="itemEditorSeries" disabled>
+                  <option value="">Pilih tier dulu&hellip;</option>
+                </select>
+              </div>
+            </div>
+            <p class="text-muted small mb-2">Semua komponen di bawah ini memakai Tier &amp; Series yang sama &mdash; sesuai satu produk/series per item.</p>
+
+            <div id="aluminiumLineList" class="mb-2"><!-- Baris komponen yang sudah ditambahkan, dirender oleh JS --></div>
+
+            <div class="row g-2 mb-3 align-items-end">
+              <div class="col-sm-6">
+                <label class="form-label" for="itemEditorComponent">Komponen (Kusen / Daun / Tiang Tengah, dst)</label>
+                <select class="form-select" id="itemEditorComponent" disabled>
+                  <option value="">Pilih tier &amp; series dulu&hellip;</option>
+                </select>
+              </div>
+              <div class="col-sm-3">
+                <label class="form-label" for="itemEditorAluQty">Kuantitas <span class="text-muted" id="itemEditorAluUom"></span></label>
+                <input type="text" inputmode="decimal" class="form-control form-control--mono" id="itemEditorAluQty" placeholder="0">
+              </div>
+              <div class="col-sm-3">
+                <button type="button" class="btn btn-outline-primary w-100" id="addAluminiumLineBtn" disabled>
+                  <i class="bi bi-plus"></i> Tambah
+                </button>
+              </div>
+            </div>
+
+            <h4 class="item-section__label">Kaca</h4>
+            <div class="row g-2 mb-3">
+              <div class="col-sm-8">
+                <label class="form-label" for="itemEditorGlass">Jenis Kaca</label>
+                <select class="form-select" id="itemEditorGlass">
+                  <option value="">Pilih kaca&hellip;</option>
+                </select>
+              </div>
+              <div class="col-sm-4">
+                <label class="form-label" for="itemEditorGlassQty">Kuantitas (m&sup2;)</label>
+                <input type="text" inputmode="decimal" class="form-control form-control--mono" id="itemEditorGlassQty" placeholder="0">
+              </div>
+            </div>
+
+            <h4 class="item-section__label">Lain-lain</h4>
+            <div id="otherLineList" class="mb-2"><!-- Baris Lain-lain yang sudah ditambahkan, dirender oleh JS --></div>
+            <div class="row g-2 mb-3 align-items-end">
+              <div class="col-sm-6">
+                <label class="form-label" for="itemEditorOther">Item Lain-lain (cth: Ornamen)</label>
+                <select class="form-select" id="itemEditorOther">
+                  <option value="">Pilih item&hellip;</option>
+                </select>
+              </div>
+              <div class="col-sm-3">
+                <label class="form-label" for="itemEditorOtherQty">Kuantitas</label>
+                <input type="text" inputmode="decimal" class="form-control form-control--mono" id="itemEditorOtherQty" placeholder="0">
+              </div>
+              <div class="col-sm-3">
+                <button type="button" class="btn btn-outline-primary w-100" id="addOtherLineBtn">
+                  <i class="bi bi-plus"></i> Tambah
+                </button>
+              </div>
+            </div>
+
+            <h4 class="item-section__label">Sealant <span class="text-muted">(otomatis)</span></h4>
+            <p class="text-muted small mb-3" id="sealantAutoDisplay">
+              Total meter lari komponen &divide; 7 &times; Rp 50.000 = <strong>Rp 0</strong>
+            </p>
+
+            <h4 class="item-section__label">Diskon &amp; Catatan</h4>
+            <div class="row g-2">
+              <div class="col-sm-5">
+                <label class="form-label" for="itemEditorDiscountValue">Diskon</label>
+                <div class="input-group">
+                  <div class="segmented-control segmented-control--sm" role="group" aria-label="Jenis diskon" id="itemEditorDiscountType">
+                    <button type="button" class="is-active" data-value="percent">%</button>
+                    <button type="button" data-value="nominal">Rp</button>
+                  </div>
+                  <input type="text" inputmode="text" class="form-control form-control--mono" id="itemEditorDiscountValue" placeholder="cth: 20 atau 20+10">
+                </div>
+                <p class="text-muted small mb-0 mt-1">Bisa ditulis berlapis, cth "20+10" = 20% dulu, lalu sisa dipotong 10% lagi.</p>
+              </div>
+              <div class="col-sm-7">
+                <label class="form-label" for="itemEditorNotes">Catatan</label>
+                <textarea class="form-control" rows="2" id="itemEditorNotes" placeholder="cth: klien minta warna hitam matte"></textarea>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Batal</button>
+          <button type="button" class="btn btn-primary" id="itemEditorSaveBtn">Simpan Item</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL / DIALOG: CONFIRM DELETE
+  ============================================================ -->
+  <div class="modal fade" id="modalConfirmDelete" tabindex="-1" aria-labelledby="modalConfirmDeleteLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-content modal-content--dialog">
+        <div class="modal-body modal-body--dialog">
+          <i class="bi bi-exclamation-triangle dialog-icon dialog-icon--danger"></i>
+          <h2 class="dialog-title" id="modalConfirmDeleteLabel">Hapus project ini?</h2>
+          <p class="dialog-text">Tindakan ini tidak bisa dibatalkan setelah 5 detik. Semua item di dalamnya akan ikut terhapus.</p>
+        </div>
+        <div class="modal-footer modal-footer--dialog">
+          <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Batal</button>
+          <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Ya, Hapus</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL: PHOTO CROP (Cropper.js) — shared by Item photo & Logo upload
+  ============================================================ -->
+  <div class="modal fade" id="modalPhotoCrop" tabindex="-1" aria-labelledby="modalPhotoCropLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title" id="modalPhotoCropLabel">Sesuaikan Foto</h2>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted small">Geser dan ubah ukuran kotak untuk memilih area foto yang ingin dipakai.</p>
+          <div class="photo-crop__stage">
+            <img src="" alt="Foto untuk di-crop" id="photoCropImage">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" id="photoCropCancelBtn" data-bs-dismiss="modal">Batal</button>
+          <button type="button" class="btn btn-primary" id="photoCropConfirmBtn"><i class="bi bi-crop"></i> Gunakan Foto Ini</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL: EXPORT PREVIEW
+  ============================================================ -->
+  <div class="modal fade" id="modalExport" tabindex="-1" aria-labelledby="modalExportLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title" id="modalExportLabel">Export Estimasi</h2>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted small">Export akan menghasilkan dokumen penawaran resmi dengan kop surat, rincian item, dan ringkasan total.</p>
+          <button type="button" class="btn btn-ghost" id="btnPrintQuotation"><i class="bi bi-printer"></i> Print / Preview di Browser</button>
+          <hr>
+          <div class="mb-0">
+            <label class="form-label" for="exportTermsOverride">Syarat &amp; Ketentuan untuk quotation ini</label>
+            <p class="text-muted small mb-2">Otomatis terisi dari Pengaturan &mdash; boleh ditambah/dikurangi khusus untuk export kali ini saja, tanpa mengubah default di Pengaturan.</p>
+            <textarea class="form-control" id="exportTermsOverride" rows="6"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Batal</button>
+          <button type="button" class="btn btn-outline-primary" id="btnExportExcel"><i class="bi bi-file-earmark-spreadsheet"></i> Export Excel</button>
+          <button type="button" class="btn btn-primary" id="btnExportPdf"><i class="bi bi-file-earmark-pdf"></i> Export PDF</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       TOAST CONTAINER
+  ============================================================ -->
+  <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer" aria-live="polite" aria-atomic="true">
+    <div class="toast app-toast app-toast--success" role="status" aria-live="polite" aria-atomic="true" id="toastSaved">
+      <i class="bi bi-check-circle"></i>
+      <div class="app-toast__body">Item berhasil disimpan</div>
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Tutup"></button>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MOBILE STICKY BOTTOM SUMMARY (shown only on project-detail, mobile)
+  ============================================================ -->
+  <div class="mobile-summary" id="mobileSummary">
+    <button class="mobile-summary__bar" type="button" id="mobileSummaryToggle" aria-expanded="false" aria-controls="mobileSummarySheet">
+      <span>Grand Total</span>
+      <span class="mono" id="mobileSummaryGrandTotal">Rp 0</span>
+      <i class="bi bi-chevron-up"></i>
+    </button>
+    <div class="mobile-summary__sheet" id="mobileSummarySheet">
+      <div class="project-summary__row">
+        <span>Grand Total Normal</span><span class="mono" id="mobileSummaryNormal">Rp 0</span>
+      </div>
+      <div class="project-summary__row project-summary__row--discount">
+        <span>Total Diskon</span><span class="mono" id="mobileSummaryDiscount">Rp 0</span>
+      </div>
+      <div class="project-summary__divider project-summary__divider--heavy"></div>
+      <div class="project-summary__row project-summary__row--grand">
+        <span>Grand Total</span><span class="mono" id="mobileSummaryGrandTotal2">Rp 0</span>
+      </div>
+      <button class="btn btn-primary w-100" type="button" data-bs-toggle="modal" data-bs-target="#modalExport">
+        <i class="bi bi-file-earmark-arrow-down"></i> Export Estimasi
+      </button>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       HIDDEN PRINT CONTAINER
+       Populated at export time by exportEngine.js. Invisible on screen
+       (css/style.css keeps it display:none); only css/print.css
+       (media="print") reveals it, and only it, when printing/exporting.
+  ============================================================ -->
+  <div id="printQuotationContainer" class="print-doc-container" aria-hidden="true"></div>
+
+  </div><!-- /#estAppShell -->
+
+  <!-- Bootstrap bundle (modal / offcanvas / dropdown / accordion / toast behavior) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Export libraries: jsPDF + AutoTable (native PDF drawing, no HTML/canvas screenshot), SheetJS (Excel) -->
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
+
+  <!-- Master pricing seed data (must load before priceManager.js) -->
+  <script src="masterData.js"></script>
+
+  <!-- Core modules (order matters: each depends on the ones above it) -->
+  <script src="helper.js"></script>
+  <script src="photoCropper.js"></script>
+  <script src="validation.js"></script>
+  <script src="calculator.js"></script>
+  <script src="storage.js"></script>
+  <script src="gsheetSync.js"></script>
+  <script src="priceManager.js"></script>
+  <script src="uiFeedback.js"></script>
+  <script src="exportEngine.js"></script>
+  <script src="project.js"></script>
+
+  <!-- Page-level wiring -->
+  <script src="settingsPage.js"></script>
+  <script src="priceManagerPage.js"></script>
+  <script src="projectDetailPage.js"></script>
+  <script src="dashboardPage.js"></script>
+
+  <!-- App UI wiring — presentation only (nav/theme/collapse) -->
+  <script src="ui.js"></script>
+
+  <!-- Application bootstrap — initializes every module above and wires
+       the Export modal to whichever project is currently open. -->
+  <script src="bootstrap.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>

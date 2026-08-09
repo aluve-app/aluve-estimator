@@ -51,10 +51,20 @@
   }
 
   /**
-   * Kalau role user BUKAN super_admin, Price Manager & Settings dibuat
-   * read-only (input di-disable) — sesuai keputusan Anto: hanya
-   * super_admin yang boleh edit katalog harga & pengaturan perusahaan.
-   * Estimator biasa tetap bisa MELIHAT halaman-halaman ini.
+   * Kalau role user BUKAN super_admin, Price Manager & Settings dikunci
+   * total (read-only) — sesuai keputusan Anto.
+   *
+   * PATCH PERBAIKAN: cara SEBELUMNYA (disable satu-satu setiap <input>)
+   * ternyata bolong — sel harga di tabel Price Manager itu bukan <input>,
+   * tapi <td contenteditable="true"> (bisa diklik & diketik langsung),
+   * jadi lolos dari disable. Isi tabelnya sendiri juga baru di-render
+   * BELAKANGAN (saat halaman itu dibuka), jadi disable sekali di awal
+   * tidak akan kena ke baris yang baru muncul.
+   *
+   * Sekarang dikunci lewat CSS (pointer-events: none) di elemen PEMBUNGKUS
+   * -nya — ini otomatis memblokir SEMUA anak elemen di dalamnya, termasuk
+   * yang baru muncul belakangan, tanpa perlu tahu bentuknya (input,
+   * contenteditable, tombol, dst — semua ikut terkunci).
    */
   function applyRoleRestrictions(user) {
     if (user.role === 'super_admin') return;
@@ -64,14 +74,13 @@
       .forEach(function (pair) {
         const page = document.getElementById(pair[0]);
         if (!page) return;
+
         const banner = document.createElement('div');
         banner.className = 'est-readonly-banner';
         banner.textContent = pair[1];
         page.insertBefore(banner, page.firstChild);
-        page.querySelectorAll('input, textarea, select, button.btn-primary').forEach(function (el) {
-          if (el.closest('.est-readonly-banner')) return;
-          el.setAttribute('disabled', 'disabled');
-        });
+
+        page.classList.add('est-locked-readonly');
       });
   }
 
@@ -148,9 +157,51 @@
     window.__EST.settings = settingsRes.success ? settingsRes.data : {};
   }
 
+  const REMEMBER_EMAIL_KEY = 'est_remembered_email';
+  const REMEMBER_TOKEN_KEY = 'est_remember_refresh_token';
+
+  async function refreshIdToken(refreshToken) {
+    const res = await fetch('https://securetoken.googleapis.com/v1/token?key=' + FIREBASE_API_KEY, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'grant_type=refresh_token&refresh_token=' + encodeURIComponent(refreshToken)
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json.id_token || null;
+  }
+
+  /**
+   * Kalau "Remember me" dicentang waktu login terakhir, coba login otomatis
+   * pakai refresh token yang tersimpan — supaya Niken/Delvy tidak perlu
+   * ketik ulang password tiap buka app (refresh token ini masa berlakunya
+   * lama, tidak seperti idToken yang cuma 1 jam).
+   */
+  async function tryAutoLogin() {
+    const savedToken = localStorage.getItem(REMEMBER_TOKEN_KEY);
+    if (!savedToken) return false;
+
+    const freshIdToken = await refreshIdToken(savedToken);
+    if (!freshIdToken) { localStorage.removeItem(REMEMBER_TOKEN_KEY); return false; }
+
+    idToken = freshIdToken;
+    const profileResult = await window.EstApi.call('readMyProfile', {});
+    if (!profileResult.success) { localStorage.removeItem(REMEMBER_TOKEN_KEY); return false; }
+
+    currentUser = profileResult.data;
+    await bootstrapData(currentUser);
+    document.getElementById('estLoginScreen').hidden = true;
+    document.getElementById('estAppShell').hidden = false;
+    updateNavbarForUser(currentUser);
+    window.__startEstimatorApp();
+    applyRoleRestrictions(currentUser);
+    return true;
+  }
+
   async function doEstLogin() {
     const email = document.getElementById('estLoginEmail').value.trim();
     const password = document.getElementById('estLoginPassword').value;
+    const rememberMe = document.getElementById('estLoginRemember').checked;
     const btn = document.getElementById('estLoginBtn');
     setLoginError('');
 
@@ -169,6 +220,14 @@
       if (!res.ok) throw new Error(json.error ? json.error.message : 'Login gagal');
 
       idToken = json.idToken;
+
+      if (rememberMe) {
+        localStorage.setItem(REMEMBER_EMAIL_KEY, email);
+        localStorage.setItem(REMEMBER_TOKEN_KEY, json.refreshToken);
+      } else {
+        localStorage.removeItem(REMEMBER_EMAIL_KEY);
+        localStorage.removeItem(REMEMBER_TOKEN_KEY);
+      }
 
       const profileResult = await window.EstApi.call('readMyProfile', {});
       if (!profileResult.success) throw new Error(profileResult.message || 'Gagal memuat profil');
@@ -191,7 +250,21 @@
     }
   }
 
+  function doEstLogout() {
+    localStorage.removeItem(REMEMBER_TOKEN_KEY);
+    location.reload();
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
+    const savedEmail = localStorage.getItem(REMEMBER_EMAIL_KEY);
+    if (savedEmail) {
+      document.getElementById('estLoginEmail').value = savedEmail;
+      document.getElementById('estLoginRemember').checked = true;
+    }
+
+    tryAutoLogin();
+
+    document.getElementById('estLogoutBtn').addEventListener('click', function (e) { e.preventDefault(); doEstLogout(); });
     document.getElementById('estLoginBtn').addEventListener('click', doEstLogin);
     document.getElementById('estLoginPassword').addEventListener('keydown', function (e) { if (e.key === 'Enter') doEstLogin(); });
     document.getElementById('estLoginEyeToggle').addEventListener('click', function () {

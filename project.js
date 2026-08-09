@@ -147,9 +147,16 @@ window.ALUVE.Project = (function () {
     // PATCH INTEGRASI SALES APP: kalau quotation ini otomatis dibuat dari
     // Sales App (project._salesProjectId ada, diisi bootstrap.js) dan
     // statusnya baru saja diubah jadi 'sent', beri tahu Sales App supaya
-    // Pipeline Stage project itu otomatis update jadi "Penawaran Siap".
+    // Pipeline Stage project itu otomatis update jadi "Penawaran Siap" —
+    // SEKALIAN kirim Grand Total (setelah diskon) supaya field "Nilai
+    // Estimasi Project" di Sales App otomatis terisi angka yang benar,
+    // tidak perlu sales ketik manual lagi.
     if (status === 'sent' && project._salesProjectId && window.EstApi) {
-      window.EstApi.call('notifySalesQuotationSent', { project_id: project.projectId }).then(function (result) {
+      const summary = window.ALUVE.Calculator.calcProjectSummary(project.items, project.projectDiscount);
+      window.EstApi.call('notifySalesQuotationSent', {
+        project_id: project.projectId,
+        estimated_value: summary.grandTotalAfterDiscount
+      }).then(function (result) {
         if (result && result.success && window.ALUVE.UiFeedback) {
           window.ALUVE.UiFeedback.showToast('Sales App sudah diberi tahu quotation ini terkirim.', 'success');
         }

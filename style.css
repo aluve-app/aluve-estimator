@@ -1171,3 +1171,14 @@ h1, h2, h3, h4 { font-family: var(--font-display); color: var(--text-primary); m
   border: 1px solid var(--accent-primary); border-radius: var(--radius-control);
   padding: 10px 14px; font-size: 13px; margin-bottom: var(--space-4);
 }
+
+/* PATCH PERBAIKAN: kunci total (bukan disable satu-satu) supaya tidak ada
+   celah — pointer-events:none otomatis berlaku ke SEMUA anak elemen di
+   dalamnya (termasuk yang baru dirender belakangan, termasuk sel harga
+   contenteditable yang lolos dari cara lama). ".est-readonly-banner"
+   sendiri dikecualikan supaya tetap kebaca jelas (tidak pudar). */
+.est-locked-readonly > *:not(.est-readonly-banner) {
+  pointer-events: none !important;
+  user-select: none !important;
+  opacity: 0.6;
+}

@@ -1151,7 +1151,8 @@ h1, h2, h3, h4 { font-family: var(--font-display); color: var(--text-primary); m
   display: flex; flex-direction: column; justify-content: center;
   padding: var(--space-12); position: relative;
 }
-.est-login-brand-mark { font-family: var(--font-display); font-weight: 700; font-size: 42px; letter-spacing: 10px; margin-bottom: var(--space-3); }
+.est-login-brand-mark { margin-bottom: var(--space-3); }
+.est-login-logo-img { height: 44px; width: auto; display: block; }
 .est-login-tagline-top { font-style: italic; font-size: 18px; color: rgba(255,255,255,0.85); margin: 0; }
 .est-login-tagline-bottom { position: absolute; left: var(--space-12); bottom: var(--space-12); right: var(--space-12); font-style: italic; font-size: 16px; color: rgba(255,255,255,0.85); margin: 0; }
 .est-login-right { width: 60%; display: flex; align-items: center; justify-content: center; background: #F6F7F8; }

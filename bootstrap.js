@@ -265,6 +265,10 @@
     tryAutoLogin();
 
     document.getElementById('estLogoutBtn').addEventListener('click', function (e) { e.preventDefault(); doEstLogout(); });
+    document.getElementById('estLoginForgot').addEventListener('click', function (e) {
+      e.preventDefault();
+      setLoginError('Lupa password? Hubungi Super Admin untuk reset password Anda.');
+    });
     document.getElementById('estLoginBtn').addEventListener('click', doEstLogin);
     document.getElementById('estLoginPassword').addEventListener('keydown', function (e) { if (e.key === 'Enter') doEstLogin(); });
     document.getElementById('estLoginEyeToggle').addEventListener('click', function () {

@@ -1138,7 +1138,14 @@ h1, h2, h3, h4 { font-family: var(--font-display); color: var(--text-primary); m
    Pakai namespace "est-login-*" supaya tidak bentrok dengan class
    apa pun yang sudah ada di file asli ini.
    ============================================================ */
-.est-login-screen { position: fixed; inset: 0; display: flex; z-index: 3000; background: var(--bg-app); }
+/* PATCH PERBAIKAN: warna di bawah ini SENGAJA di-hardcode (bukan var(--...))
+   supaya layar login SELALU tampil terang sesuai mockup, apa pun tema
+   sistem operasi/browser pemakainya. ui.js mendeteksi dark-mode otomatis
+   dan menerapkannya ke seluruh app SEBELUM login — kalau login pakai
+   var(--bg-surface) dkk, dia ikut jadi gelap juga (itu yang kemarin
+   terjadi). Halaman lain di app (dashboard, dst) TETAP ikut tema
+   gelap/terang seperti biasa — cuma layar login yang dikecualikan. */
+.est-login-screen { position: fixed; inset: 0; display: flex; z-index: 3000; background: #F6F7F8; }
 .est-login-left {
   width: 40%; background: #0A0A0A; color: #fff;
   display: flex; flex-direction: column; justify-content: center;
@@ -1147,19 +1154,24 @@ h1, h2, h3, h4 { font-family: var(--font-display); color: var(--text-primary); m
 .est-login-brand-mark { font-family: var(--font-display); font-weight: 700; font-size: 42px; letter-spacing: 10px; margin-bottom: var(--space-3); }
 .est-login-tagline-top { font-style: italic; font-size: 18px; color: rgba(255,255,255,0.85); margin: 0; }
 .est-login-tagline-bottom { position: absolute; left: var(--space-12); bottom: var(--space-12); right: var(--space-12); font-style: italic; font-size: 16px; color: rgba(255,255,255,0.85); margin: 0; }
-.est-login-right { width: 60%; display: flex; align-items: center; justify-content: center; }
-.est-login-card { width: 380px; background: var(--bg-surface); border: 1px solid var(--border-default); border-radius: var(--radius-card); padding: var(--space-8); }
-.est-login-welcome { font-family: var(--font-display); font-size: 26px; font-weight: 700; margin: 0; color: var(--text-primary); }
-.est-login-subtitle { color: var(--text-secondary); font-size: 14px; margin: 6px 0 var(--space-6); }
-.est-login-input-group { display: flex; align-items: center; gap: var(--space-2); background: var(--bg-app); border: 1px solid var(--border-default); border-radius: var(--radius-control); padding: 12px 14px; margin-bottom: var(--space-3); }
-.est-login-input-group i { color: var(--text-secondary); font-size: 15px; }
-.est-login-input-group input { border: none; outline: none; flex: 1; background: transparent; font-size: 14px; color: var(--text-primary); font-family: var(--font-body); }
-.est-login-eye-toggle { background: none; border: none; color: var(--text-secondary); padding: 0; cursor: pointer; }
-.est-login-error { color: var(--accent-danger); font-size: 13px; min-height: 16px; margin: -6px 0 12px; }
+.est-login-right { width: 60%; display: flex; align-items: center; justify-content: center; background: #F6F7F8; }
+.est-login-card { width: 380px; background: #FFFFFF; border: 1px solid #E4E8EA; border-radius: var(--radius-card); padding: var(--space-8); }
+.est-login-welcome { font-family: var(--font-display); font-size: 26px; font-weight: 700; margin: 0; color: #1B2228; }
+.est-login-subtitle { color: #4A555E; font-size: 14px; margin: 6px 0 var(--space-6); }
+.est-login-input-group { display: flex; align-items: center; gap: var(--space-2); background: #F6F7F8; border: 1px solid #E4E8EA; border-radius: var(--radius-control); padding: 12px 14px; margin-bottom: var(--space-3); }
+.est-login-input-group i { color: #4A555E; font-size: 15px; }
+.est-login-input-group input { border: none; outline: none; flex: 1; background: transparent; font-size: 14px; color: #1B2228; font-family: var(--font-body); }
+.est-login-input-group input::placeholder { color: #8A94A0; }
+.est-login-eye-toggle { background: none; border: none; color: #4A555E; padding: 0; cursor: pointer; }
+.est-login-row-secondary { display: flex; align-items: center; justify-content: space-between; font-size: 13px; margin: var(--space-2) 0 var(--space-6); }
+.est-login-remember { display: flex; align-items: center; gap: 6px; color: #1B2228; font-weight: 600; cursor: pointer; }
+.est-login-forgot { color: #1B2228; font-weight: 600; text-decoration: none; }
+.est-login-forgot:hover { text-decoration: underline; }
+.est-login-error { color: #C0392B; font-size: 13px; min-height: 16px; margin: -6px 0 12px; }
 .est-login-submit-btn { width: 100%; padding: 14px; border: none; border-radius: var(--radius-control); background: #0A0A0A; color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; font-family: var(--font-body); }
 .est-login-submit-btn:hover { background: #1A1A1A; }
 .est-login-submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-.est-login-footer { text-align: center; font-size: 12px; color: var(--text-secondary); margin-top: var(--space-6); margin-bottom: 0; }
+.est-login-footer { text-align: center; font-size: 12px; color: #4A555E; margin-top: var(--space-6); margin-bottom: 0; }
 @media (max-width: 900px) {
   .est-login-left { display: none; }
   .est-login-right { width: 100%; }

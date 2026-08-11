@@ -79,8 +79,21 @@ window.ALUVE.Project = (function () {
   }
 
   /** @returns {Array<Object>} every saved project, most-recently-updated first */
+  /**
+   * PATCH FITUR SAMPAH: sekarang cuma mengembalikan project yang BELUM
+   * di-sampah-kan (isDeleted !== true) — supaya Dashboard/Semua Project
+   * otomatis bersih dari project yang sudah dihapus (soft-delete), tanpa
+   * perlu ubah kode lain yang memanggil getAllProjects().
+   */
   function getAllProjects() {
-    return Storage.getProjects();
+    return Storage.getProjects().filter(function (p) { return !p.isDeleted; });
+  }
+
+  /** @returns {Array<Object>} project yang ada di Sampah, terbaru dihapus duluan */
+  function getTrashedProjects() {
+    return Storage.getProjects()
+      .filter(function (p) { return p.isDeleted; })
+      .sort(function (a, b) { return new Date(b.deletedAt || 0) - new Date(a.deletedAt || 0); });
   }
 
   /** @param {string} projectId @returns {Object|null} */
@@ -167,11 +180,49 @@ window.ALUVE.Project = (function () {
   }
 
   /** @param {string} projectId @returns {{success:boolean, message:string}} */
+  /**
+   * PATCH FITUR SAMPAH: "Hapus" sekarang TIDAK langsung menghapus data
+   * permanen — cuma menandai project sebagai isDeleted (pindah ke halaman
+   * Sampah). Ini supaya kalau salah hapus, masih bisa dipulihkan. Hapus
+   * permanen sungguhan ada di fungsi permanentlyDeleteProject() di bawah,
+   * dipanggil dari halaman Sampah.
+   */
   function deleteProject(projectId) {
+    const project = getProject(projectId);
+    if (!project) return { success: false, message: 'Project tidak ditemukan.' };
+
+    project.isDeleted = true;
+    project.deletedAt = new Date().toISOString();
+    const saved = Storage.saveProject(project);
+    return saved
+      ? { success: true, message: 'Project dipindahkan ke Sampah.' }
+      : { success: false, message: 'Gagal memindahkan project ke Sampah.' };
+  }
+
+  /** Mengembalikan project dari Sampah ke daftar normal. */
+  function restoreProject(projectId) {
+    const project = getProject(projectId);
+    if (!project) return { success: false, message: 'Project tidak ditemukan.' };
+
+    project.isDeleted = false;
+    project.deletedAt = null;
+    const saved = Storage.saveProject(project);
+    return saved
+      ? { success: true, message: 'Project berhasil dipulihkan.' }
+      : { success: false, message: 'Gagal memulihkan project.' };
+  }
+
+  /**
+   * Hapus PERMANEN & SUNGGUHAN dari server — tidak bisa dibatalkan lagi.
+   * Hanya boleh dipanggil dari halaman Sampah (project harus isDeleted
+   * dulu sebelum bisa dihapus permanen, mencegah hapus permanen tidak
+   * sengaja langsung dari Dashboard).
+   */
+  function permanentlyDeleteProject(projectId) {
     const deleted = Storage.deleteProject(projectId);
     return deleted
-      ? { success: true, message: 'Project berhasil dihapus.' }
-      : { success: false, message: 'Gagal menghapus project.' };
+      ? { success: true, message: 'Project dihapus permanen.' }
+      : { success: false, message: 'Gagal menghapus project secara permanen.' };
   }
 
   /**
@@ -427,6 +478,9 @@ window.ALUVE.Project = (function () {
     updateProjectMeta: updateProjectMeta,
     setProjectStatus: setProjectStatus,
     deleteProject: deleteProject,
+    restoreProject: restoreProject,
+    permanentlyDeleteProject: permanentlyDeleteProject,
+    getTrashedProjects: getTrashedProjects,
     duplicateProject: duplicateProject,
     addItem: addItem,
     updateItem: updateItem,

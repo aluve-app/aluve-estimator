@@ -104,7 +104,16 @@
     window.ALUVE.PriceManagerPage.init();
     window.ALUVE.ProjectDetailPage.init();
     window.ALUVE.DashboardPage.init();
+    window.ALUVE.TrashPage.init();
     wireExportButtons();
+
+    // PATCH PERBAIKAN: sebelumnya applyNavbarLogo() cuma dipanggil 1x saat
+    // ui.js pertama kali dimuat — jauh SEBELUM login & sebelum data
+    // Pengaturan (termasuk logo) selesai diambil dari server, jadi logo
+    // yang sudah diupload Super Admin tidak pernah kelihatan (selalu
+    // fallback ke kotak placeholder). Sekarang dipanggil ULANG di sini,
+    // setelah bootstrapData() pasti sudah selesai.
+    if (window.ALUVE.Nav) window.ALUVE.Nav.applyNavbarLogo();
 
     // Retry any Sheet syncs left queued from a previous offline session.
     if (window.ALUVE.GSheetSync) window.ALUVE.GSheetSync.flushQueue();

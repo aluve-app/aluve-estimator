@@ -337,7 +337,10 @@ window.ALUVE.DashboardPage = (function () {
     const result = Project.deleteProject(pendingDeleteProjectId);
     notify(result.message, result.success ? 'success' : 'danger');
     pendingDeleteProjectId = null;
-    if (result.success) renderAll();
+    if (result.success) {
+      renderAll();
+      if (window.ALUVE.TrashPage) window.ALUVE.TrashPage.render();
+    }
   }
 
   function bindEvents() {

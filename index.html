@@ -21,9 +21,11 @@
   <!-- App stylesheet (design tokens + component styles) -->
   <link rel="icon" type="image/png" href="assets/favicon.png">
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="drawing.css">
 
   <!-- Print-only stylesheet — professional quotation layout, no effect on screen -->
   <link rel="stylesheet" href="style-print.css" media="print">
+  <link rel="stylesheet" href="drawing-print.css" media="print">
 </head>
 <body>
 
@@ -151,6 +153,9 @@
         </a>
         <a class="app-sidebar__link" href="#project-detail" data-page="project-detail">
           <i class="bi bi-file-earmark-ruled"></i><span>Detail Project</span>
+        </a>
+        <a class="app-sidebar__link" href="#drawing" data-page="drawing">
+          <i class="bi bi-vector-pen"></i><span>Generate Drawing</span>
         </a>
         <a class="app-sidebar__link" href="#price-manager" data-page="price-manager">
           <i class="bi bi-tags"></i><span>Price Manager</span>
@@ -506,6 +511,216 @@
               <!-- Rendered dynamically by priceManagerPage.js -->
             </tbody>
           </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         PAGE: GENERATE DRAWING — ilustrasi teknik sederhana untuk
+         pintu/jendela aluminium, berdiri sendiri (tidak terhubung ke
+         data Project/Item). Lihat drawingPage.js untuk logikanya.
+    ============================================================ -->
+    <section class="app-page" id="page-drawing" data-page-section="drawing">
+      <div class="app-page__header">
+        <div>
+          <h1>Generate Drawing</h1>
+          <p class="app-page__subtitle">Ilustrasi teknik sederhana untuk visualisasi penawaran — bukan gambar kerja produksi. Semua field diisi manual di halaman ini.</p>
+        </div>
+      </div>
+
+      <div class="dg-panel">
+        <div class="dg-panel-header">
+          <h2 class="dg-panel-title">Pengaturan gambar</h2>
+          <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-toggle-form">Sembunyikan</button>
+        </div>
+
+        <div id="form-panel-body">
+
+          <div class="dg-segment-header">
+            <h3>Data proyek</h3>
+            <button type="button" class="btn btn-sm btn-outline-secondary dg-segment-toggle" data-target="seg-data-proyek">Sembunyikan</button>
+          </div>
+          <div class="dg-field-grid" id="seg-data-proyek">
+            <div>
+              <label class="form-label" for="f-brand">Brand Aluve</label>
+              <select class="form-select" id="f-brand">
+                <option value="optima">Aluve Optima</option>
+                <option value="prima" selected>Aluve Prima</option>
+                <option value="recta">Aluve Recta</option>
+                <option value="nexa">Aluve Nexa</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label" for="f-customer">Nama project</label>
+              <input class="form-control" id="f-customer" type="text" placeholder="cth: Chandra Michelle House" value="Chandra Michelle House">
+            </div>
+            <div>
+              <label class="form-label" for="f-ref">Alamat</label>
+              <input class="form-control" id="f-ref" type="text" placeholder="cth: Jl. Trimaran 3, Penjaringan, Jakarta Utara" value="Jl. Trimaran 3, Penjaringan, Jakarta Utara">
+            </div>
+            <div>
+              <label class="form-label" for="f-date">Tanggal</label>
+              <input class="form-control" id="f-date" type="date">
+            </div>
+            <div>
+              <label class="form-label" for="f-item-code">Kode kusen / kode gambar</label>
+              <input class="form-control" id="f-item-code" type="text" placeholder="cth: PF1" value="PF1">
+            </div>
+
+            <div class="dg-checkbox-row">
+              <input type="checkbox" class="form-check-input" id="f-has-revision">
+              <label class="form-check-label" for="f-has-revision">Ada revisi?</label>
+            </div>
+            <div id="revision-fields-wrap" class="dg-field-grid" style="display:none;">
+              <div>
+                <label class="form-label" for="f-rev-no">No. revisi</label>
+                <input class="form-control" id="f-rev-no" type="text" placeholder="cth: 1">
+              </div>
+              <div>
+                <label class="form-label" for="f-rev-date">Tanggal revisi</label>
+                <input class="form-control" id="f-rev-date" type="date">
+              </div>
+              <div>
+                <label class="form-label" for="f-rev-desc">Keterangan revisi</label>
+                <input class="form-control" id="f-rev-desc" type="text" placeholder="cth: Ubah ukuran lebar">
+              </div>
+            </div>
+          </div>
+
+          <div class="dg-segment-header">
+            <h3>Spesifikasi produk</h3>
+            <button type="button" class="btn btn-sm btn-outline-secondary dg-segment-toggle" data-target="seg-spesifikasi">Sembunyikan</button>
+          </div>
+          <div class="dg-field-grid" id="seg-spesifikasi">
+            <div>
+              <label class="form-label" for="f-product">Jenis produk</label>
+              <select class="form-select" id="f-product">
+                <option value="swing_door">Pintu swing</option>
+                <option value="swing_window">Jendela swing</option>
+                <option value="jungkit_window">Jendela jungkit</option>
+                <option value="swing_jungkit_window">Jendela swing &amp; jungkit</option>
+                <option value="sliding_door" selected>Pintu sliding</option>
+                <option value="folding_door">Pintu folding</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label" for="f-width">Lebar (mm)</label>
+              <input class="form-control" id="f-width" type="number" value="1800" min="200" step="10">
+            </div>
+            <div>
+              <label class="form-label" for="f-height">Tinggi (mm)</label>
+              <input class="form-control" id="f-height" type="number" value="2100" min="200" step="10">
+            </div>
+            <div>
+              <label class="form-label" for="f-panel">Jumlah panel</label>
+              <input class="form-control" id="f-panel" type="number" value="3" min="1" max="6" step="1">
+            </div>
+            <div>
+              <label class="form-label" for="f-color">Warna aluminium</label>
+              <select class="form-select" id="f-color">
+                <option value="#7d828c" selected>Grey powder coating</option>
+                <option value="#2b2b2b">Black matt</option>
+                <option value="#a9824f">Bronze</option>
+                <option value="#d8d4c9">White</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="dg-segment-header">
+            <h3>Detail per panel</h3>
+            <button type="button" class="btn btn-sm btn-outline-secondary dg-segment-toggle" data-target="seg-detail-panel">Sembunyikan</button>
+          </div>
+          <div id="seg-detail-panel">
+            <div id="panel-tabs" class="dg-panel-tabs"></div>
+            <div class="dg-panel-config-box">
+              <div class="dg-field-grid">
+                <div id="pc-direction-wrap">
+                  <label class="form-label" for="pc-direction">Arah bukaan</label>
+                  <select class="form-select" id="pc-direction"></select>
+                </div>
+                <div>
+                  <label class="form-label" for="pc-panel-type">Jenis panel</label>
+                  <select class="form-select" id="pc-panel-type">
+                    <option value="kaca" selected>Kaca</option>
+                    <option value="jalusi">Jalusi aluminium</option>
+                    <option value="kaca_nako">Kaca nako</option>
+                    <option value="panel_acp">Panel ACP</option>
+                    <option value="panel_acp_bergaris">Panel ACP bergaris</option>
+                  </select>
+                </div>
+                <div id="pc-glass-wrap">
+                  <label class="form-label" for="pc-glass">Jenis kaca</label>
+                  <select class="form-select" id="pc-glass">
+                    <option>Kaca clear 5mm</option>
+                    <option selected>Kaca clear 8mm</option>
+                    <option>Kaca buram 5mm</option>
+                    <option>Kaca tempered 10mm</option>
+                  </select>
+                </div>
+                <div id="pc-insect-wrap" class="dg-checkbox-row">
+                  <input type="checkbox" class="form-check-input" id="pc-insect">
+                  <label class="form-check-label" for="pc-insect">Tambah insect screen (kasa nyamuk)</label>
+                </div>
+                <div class="dg-checkbox-row">
+                  <input type="checkbox" class="form-check-input" id="pc-fixglass">
+                  <label class="form-check-label" for="pc-fixglass">Kaca mati (fix glass) — tidak bisa dibuka</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <button id="btn-generate" class="btn btn-primary w-100 dg-btn-generate" type="button">Generate drawing</button>
+          <p class="dg-hint">Kalau jumlah panel &gt; 1, pengaturan di atas berlaku per panel — pindah tab untuk atur panel lain. Warna aluminium dan jenis kaca nantinya diambil dari Admin Lookup.</p>
+        </div>
+      </div>
+
+      <div class="dg-panel dg-result-panel">
+        <div class="dg-result-header">
+          <div>
+            <h2 id="r-title">—</h2>
+            <p class="dg-result-meta" id="r-meta"></p>
+          </div>
+        </div>
+
+        <div class="dg-drawing-grid">
+          <div class="dg-card">
+            <h3>Tampak depan</h3>
+            <div id="view-front" class="dg-svg-holder"></div>
+          </div>
+          <div class="dg-card">
+            <h3>Potongan horizontal</h3>
+            <div id="view-horizontal" class="dg-svg-holder"></div>
+            <div id="legend-horizontal"></div>
+          </div>
+          <div class="dg-card">
+            <h3>Potongan vertikal</h3>
+            <div id="view-vertical" class="dg-svg-holder"></div>
+            <div id="legend-vertical"></div>
+          </div>
+          <div class="dg-card dg-info-card">
+            <h3>Informasi produk</h3>
+            <table id="info-table"></table>
+          </div>
+        </div>
+
+        <div class="dg-actions">
+          <button id="btn-add-new" class="btn btn-outline-secondary" type="button">+ Tambah gambar baru</button>
+          <button id="btn-regenerate" class="btn btn-outline-secondary" type="button">Generate ulang</button>
+          <button id="btn-png" class="btn btn-outline-secondary" type="button">Download PNG (gambar ini)</button>
+          <button id="btn-pdf" class="btn btn-outline-secondary" type="button">Download PDF (gambar ini)</button>
+          <button id="btn-print" class="btn btn-primary" type="button">Print</button>
+        </div>
+      </div>
+
+      <div class="dg-panel dg-history-panel" id="history-panel" style="display:none;">
+        <h2>Riwayat gambar — <span id="history-client-name"></span></h2>
+        <div id="history-list"></div>
+        <div class="dg-download-all-box">
+          <h3>Download semua gambar klien ini</h3>
+          <div class="dg-actions">
+            <button id="btn-download-all-pdf" class="btn btn-outline-secondary" type="button">Download semua (PDF, 1 file)</button>
+            <button id="btn-download-all-png" class="btn btn-outline-secondary" type="button">Download semua (PNG, per gambar)</button>
+          </div>
         </div>
       </div>
     </section>
@@ -1023,6 +1238,10 @@
   ============================================================ -->
   <div id="printQuotationContainer" class="print-doc-container" aria-hidden="true"></div>
 
+  <!-- Print container for Generate Drawing page — independent from the
+       quotation print flow above, see drawing-print.css -->
+  <div id="drawingPrintContainer" class="print-doc-container" aria-hidden="true"></div>
+
   </div><!-- /#estAppShell -->
 
   <!-- Bootstrap bundle (modal / offcanvas / dropdown / accordion / toast behavior) -->
@@ -1055,6 +1274,7 @@
   <script src="projectDetailPage.js"></script>
   <script src="dashboardPage.js"></script>
   <script src="trashPage.js"></script>
+  <script src="drawingPage.js"></script>
 
   <!-- App UI wiring — presentation only (nav/theme/collapse) -->
   <script src="ui.js"></script>

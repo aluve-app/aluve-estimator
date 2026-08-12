@@ -1,0 +1,102 @@
+/* ============================================================
+   DRAWING.CSS — halaman "Generate Drawing"
+   Memakai design token yang sama dengan style.css (--bg-surface,
+   --text-primary, dst) supaya menyatu dengan tampilan Estimator
+   yang sudah ada. Semua class di sini diberi prefix "dg-" supaya
+   tidak pernah bentrok dengan class lain di app ini.
+   ============================================================ */
+
+.dg-panel {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-card);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-soft);
+  margin-bottom: var(--space-6);
+}
+
+.dg-panel h3 {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  margin: 0 0 var(--space-3);
+}
+
+.dg-panel-header, .dg-segment-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.dg-segment-header { margin-top: var(--space-6); }
+.dg-segment-header:first-child { margin-top: 0; }
+.dg-panel-title { font-family: var(--font-display); font-size: var(--text-lg); font-weight: 600; margin: 0; color: var(--text-primary); }
+.dg-segment-header h3 { margin: 0; }
+
+.dg-field-grid { display: flex; flex-wrap: wrap; gap: var(--space-4); margin-top: var(--space-4); }
+.dg-field-grid > div { flex: 1 1 200px; }
+.dg-field-grid .form-label { font-weight: 500; font-size: var(--text-sm); }
+
+.dg-checkbox-row { display: flex; align-items: center; gap: var(--space-2); flex: 1 1 200px; padding-top: var(--space-6); }
+.dg-checkbox-row .form-check-label { margin: 0; font-weight: 500; font-size: var(--text-sm); }
+
+.dg-btn-generate { margin-top: var(--space-6); }
+.dg-hint { font-size: var(--text-xs); color: var(--text-secondary); margin: var(--space-2) 0 0; line-height: 1.5; }
+
+/* ---------------------------------------------------------
+   Detail per panel — tabs + config box
+--------------------------------------------------------- */
+.dg-panel-tabs { display: flex; gap: var(--space-2); flex-wrap: wrap; margin: var(--space-3) 0 var(--space-3); }
+.dg-panel-tab-btn {
+  font: inherit; font-size: var(--text-sm); font-weight: 600;
+  padding: 5px 12px; border-radius: 999px;
+  border: 1px solid var(--border-default); background: var(--bg-surface); color: var(--text-secondary);
+  cursor: pointer;
+}
+.dg-panel-tab-btn.active { background: var(--accent-primary); border-color: var(--accent-primary); color: var(--text-inverse); }
+.dg-panel-config-box { border: 1px solid var(--border-default); border-radius: var(--radius-control); padding: var(--space-4); background: var(--bg-surface-hover); }
+
+/* ---------------------------------------------------------
+   Result panel — generated drawing cards
+--------------------------------------------------------- */
+.dg-result-header { margin-bottom: var(--space-4); }
+.dg-result-header h2 { font-family: var(--font-display); font-size: var(--text-xl); font-weight: 600; margin: 0 0 var(--space-1); color: var(--text-primary); }
+.dg-result-meta { margin: 0; color: var(--text-secondary); font-size: var(--text-sm); }
+
+.dg-drawing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+@media (max-width: 640px) { .dg-drawing-grid { grid-template-columns: 1fr; } }
+
+.dg-card { background: var(--bg-surface); border: 1px solid var(--border-default); border-radius: var(--radius-control); padding: var(--space-4); }
+.dg-card h3 { font-size: var(--text-sm); font-weight: 600; margin: 0 0 var(--space-2); color: var(--text-secondary); }
+.dg-svg-holder { width: 100%; display: flex; justify-content: center; background: var(--bg-surface-hover); border-radius: var(--radius-control); border: 1px solid var(--border-default); padding: var(--space-2); }
+.dg-svg-holder svg { width: 100%; height: auto; display: block; }
+
+.dg-legend { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); }
+.dg-legend-item { display: flex; align-items: center; gap: 4px; font-size: var(--text-xs); color: var(--text-secondary); }
+.dg-legend-swatch { width: 10px; height: 10px; border-radius: 2px; display: inline-block; border: 1px solid rgba(0,0,0,0.12); }
+
+.dg-info-card table { width: 100%; border-collapse: collapse; font-size: var(--text-base); }
+.dg-info-card td { padding: 7px 0; border-bottom: 1px solid var(--border-default); }
+.dg-info-card td:first-child { color: var(--text-secondary); width: 36%; }
+.dg-info-card td:last-child { font-weight: 500; text-align: right; }
+.dg-info-card tr:last-child td { border-bottom: none; }
+
+.dg-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: var(--space-2); margin-top: var(--space-6); }
+.dg-actions .btn { font-size: var(--text-sm); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---------------------------------------------------------
+   Riwayat gambar + download semua
+--------------------------------------------------------- */
+.dg-history-panel h2 { font-size: var(--text-sm); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-secondary); margin: 0 0 var(--space-4); }
+.dg-history-item { border: 1px solid var(--border-default); border-radius: var(--radius-control); margin-bottom: var(--space-2); overflow: hidden; }
+.dg-history-header { display: flex; justify-content: space-between; align-items: center; padding: var(--space-3); cursor: pointer; background: var(--bg-surface-hover); font-size: var(--text-sm); font-weight: 600; }
+.dg-history-header:hover { background: var(--accent-primary-tint); }
+.dg-history-body { display: none; padding: var(--space-4); border-top: 1px solid var(--border-default); }
+.dg-history-body.open { display: block; }
+.dg-history-remove { font-size: var(--text-xs); color: var(--accent-danger); background: none; border: none; cursor: pointer; padding: 4px var(--space-2); }
+.dg-history-remove:hover { text-decoration: underline; }
+
+.dg-download-all-box { margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--border-default); }
+.dg-download-all-box h3 { font-size: var(--text-sm); font-weight: 600; margin: 0 0 var(--space-3); color: var(--text-primary); text-transform: none; letter-spacing: normal; }

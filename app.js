@@ -105,6 +105,7 @@
     window.ALUVE.ProjectDetailPage.init();
     window.ALUVE.DashboardPage.init();
     window.ALUVE.TrashPage.init();
+    window.ALUVE.DrawingPage.init();
     wireExportButtons();
 
     // PATCH PERBAIKAN: sebelumnya applyNavbarLogo() cuma dipanggil 1x saat

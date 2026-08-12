@@ -22,7 +22,8 @@ window.ALUVE.Storage = (function () {
     PROJECTS: 'aluve_projects',
     MASTER_PRICES: 'aluve_master_prices',
     SETTINGS: 'aluve_settings',
-    PRICE_HISTORY: 'aluve_price_history'
+    PRICE_HISTORY: 'aluve_price_history',
+    DRAWINGS: 'aluve_drawings'
   };
 
   const DEFAULT_SETTINGS = {
@@ -279,6 +280,52 @@ window.ALUVE.Storage = (function () {
   }
 
   /* ----------------------------------------------------------
+     Generate Drawing — riwayat gambar
+     ============================================================
+     Murni LocalStorage untuk sekarang (belum disambungkan ke
+     server/Firestore — keputusan sadar Anto per sesi integrasi
+     "Generate Drawing", supaya bisa jalan cepat tanpa endpoint
+     backend baru dulu). Artinya riwayat ini HANYA ada di
+     browser/device yang dipakai generate, tidak ikut sinkron
+     seperti Projects. Polanya sengaja disamakan dengan
+     getPriceHistory/appendPriceHistory di atas (readJson/writeJson
+     biasa) supaya gampang di-upgrade ke pola server-sync yang sama
+     seperti Projects kalau nanti dibutuhkan.
+  ---------------------------------------------------------- */
+
+  /** @returns {Array<Object>} semua gambar tersimpan, terbaru duluan */
+  function getDrawings() {
+    return readJson(KEYS.DRAWINGS, []).slice().reverse();
+  }
+
+  /**
+   * Menyimpan satu entry gambar baru ke riwayat (append-only dari sisi
+   * urutan — entry lama tidak pernah ditimpa, tiap "Tambah Gambar Baru"
+   * selalu jadi baris baru).
+   * @param {Object} drawingData - hasil readForm() dari drawingPage.js
+   * @returns {{success:boolean, id:string}}
+   */
+  function saveDrawing(drawingData) {
+    const drawings = readJson(KEYS.DRAWINGS, []);
+    const Helper = window.ALUVE.Helper;
+    const id = Helper ? Helper.generateId('drw') : 'drw_' + Date.now().toString(36);
+    drawings.push(Object.assign({}, drawingData, { id: id, createdAt: new Date().toISOString() }));
+    const ok = writeJson(KEYS.DRAWINGS, drawings);
+    return { success: ok, id: id };
+  }
+
+  /**
+   * Menghapus satu entry riwayat gambar berdasarkan id.
+   * @param {string} id
+   * @returns {boolean}
+   */
+  function deleteDrawing(id) {
+    const drawings = readJson(KEYS.DRAWINGS, []);
+    const filtered = drawings.filter(function (d) { return d.id !== id; });
+    return writeJson(KEYS.DRAWINGS, filtered);
+  }
+
+  /* ----------------------------------------------------------
      Backup / restore (manual JSON export-import of everything)
   ---------------------------------------------------------- */
 
@@ -339,6 +386,9 @@ window.ALUVE.Storage = (function () {
     saveSettings: saveSettings,
     getPriceHistory: getPriceHistory,
     appendPriceHistory: appendPriceHistory,
+    getDrawings: getDrawings,
+    saveDrawing: saveDrawing,
+    deleteDrawing: deleteDrawing,
     exportBackup: exportBackup,
     importBackup: importBackup
   };

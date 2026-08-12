@@ -75,7 +75,14 @@ window.ALUVE.ProjectDetailPage = (function () {
       summaryGrandTotal: '#summaryGrandTotalAfterDiscount',
       projectDiscountType: '#projectDiscountType',
       projectDiscountValue: '#projectDiscountValue',
-      projectDiscountApplyBtn: '#projectDiscountApplyBtn'
+      projectDiscountApplyBtn: '#projectDiscountApplyBtn',
+      revisionBadge: '#projectDetailRevisionBadge',
+      historyWrap: '#projectDetailHistoryWrap',
+      historyBtn: '#projectDetailHistoryBtn',
+      historyList: '#projectDetailHistoryList',
+      createRevisionBtn: '#projectDetailCreateRevisionBtn',
+      lockedBanner: '#projectDetailLockedBanner',
+      layout: '#projectDetailLayout'
     }));
 
     dom.modalItemEditorEl = document.getElementById('modalItemEditor');
@@ -160,8 +167,42 @@ window.ALUVE.ProjectDetailPage = (function () {
       dom.statusChip.className = 'status-chip ' + statusClass;
     }
 
+    renderRevisionUi(project);
     renderItemList(project);
     renderSummary(project);
+  }
+
+  /**
+   * FITUR REVISI: badge nomor revisi, banner + kunci tampilan kalau ini
+   * revisi LAMA (isLocked), dan daftar dropdown "Riwayat Revisi" berisi
+   * semua revisi dari quotation yang sama (bisa loncat lihat yang lain).
+   */
+  function renderRevisionUi(project) {
+    const revisionNumber = project.revisionNumber || 1;
+    const isLocked = !!project.isLocked;
+
+    if (dom.revisionBadge) {
+      dom.revisionBadge.innerHTML = ' &middot; <span class="revision-badge' + (isLocked ? ' revision-badge--locked' : '') + '">' +
+        (isLocked ? '<i class="bi bi-lock-fill"></i> ' : '') + 'Revisi ' + revisionNumber + '</span>';
+    }
+
+    if (dom.lockedBanner) dom.lockedBanner.hidden = !isLocked;
+    if (dom.layout) dom.layout.classList.toggle('est-locked-readonly', isLocked);
+    if (dom.createRevisionBtn) dom.createRevisionBtn.hidden = isLocked;
+    if (dom.statusChip && dom.statusChip.closest('.dropdown')) {
+      dom.statusChip.closest('.dropdown').classList.toggle('est-locked-readonly', isLocked);
+    }
+
+    const history = Project.getRevisionHistory(project.projectId);
+    if (dom.historyWrap) dom.historyWrap.hidden = history.length <= 1;
+    if (dom.historyList) {
+      dom.historyList.innerHTML = history.map(function (p) {
+        const active = p.projectId === project.projectId ? ' active' : '';
+        const lockIcon = p.isLocked ? '<i class="bi bi-lock-fill text-muted"></i> ' : '<i class="bi bi-pencil-fill text-primary"></i> ';
+        return '<li><a class="dropdown-item' + active + '" href="#" data-open-revision="' + p.projectId + '">' +
+          lockIcon + 'Revisi ' + (p.revisionNumber || 1) + (p.isLocked ? ' (Riwayat)' : ' (Aktif)') + '</a></li>';
+      }).join('');
+    }
   }
 
   function renderItemList(project) {
@@ -729,12 +770,42 @@ window.ALUVE.ProjectDetailPage = (function () {
     });
   }
 
+  function bindRevisionActions() {
+    if (dom.createRevisionBtn) {
+      dom.createRevisionBtn.addEventListener('click', async function () {
+        const project = getCurrentProject();
+        if (!project) return;
+        const confirmed = window.confirm('Buat revisi baru dari quotation ini? Revisi sekarang akan DIKUNCI jadi riwayat (tidak bisa diedit lagi), dan Anda akan lanjut kerja di revisi baru.');
+        if (!confirmed) return;
+
+        dom.createRevisionBtn.disabled = true;
+        const result = await Project.createRevision(project.projectId);
+        dom.createRevisionBtn.disabled = false;
+
+        if (!result.success) { notify(result.message, 'danger'); return; }
+        notify(result.message, 'success');
+        if (window.ALUVE.DashboardPage) window.ALUVE.DashboardPage.renderAll();
+        open(result.data.project_id);
+      });
+    }
+
+    if (dom.historyList) {
+      dom.historyList.addEventListener('click', function (event) {
+        const link = event.target.closest('[data-open-revision]');
+        if (!link) return;
+        event.preventDefault();
+        open(link.dataset.openRevision);
+      });
+    }
+  }
+
   function init() {
     cacheElements();
     if (!dom.page) return;
     bindItemListActions();
     bindItemEditorEvents();
     bindProjectDiscountForm();
+    bindRevisionActions();
   }
 
   return {

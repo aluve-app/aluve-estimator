@@ -324,9 +324,19 @@
             <button class="icon-btn icon-btn--sm" type="button" id="projectDetailEditQuotationBtn" aria-label="Ubah nomor quotation" title="Ubah nomor quotation">
               <i class="bi bi-pencil"></i>
             </button>
+            <span id="projectDetailRevisionBadge"></span>
           </p>
+          <div class="dropdown" id="projectDetailHistoryWrap" hidden>
+            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="projectDetailHistoryBtn" data-bs-toggle="dropdown">
+              <i class="bi bi-clock-history"></i> Riwayat Revisi
+            </button>
+            <ul class="dropdown-menu" id="projectDetailHistoryList"></ul>
+          </div>
         </div>
         <div class="d-flex gap-2">
+          <button class="btn btn-outline-secondary" type="button" id="projectDetailCreateRevisionBtn" title="Bikin salinan quotation ini sebagai revisi baru, yang lama otomatis dikunci jadi riwayat">
+            <i class="bi bi-copy"></i> Buat Revisi Baru
+          </button>
           <div class="dropdown">
             <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="projectDetailStatusBtn" data-bs-toggle="dropdown" aria-expanded="false">
               <span class="status-chip status-chip--draft" id="projectDetailStatusChip">Draft</span>
@@ -344,7 +354,11 @@
         </div>
       </div>
 
-      <div class="project-detail-layout">
+      <div id="projectDetailLockedBanner" class="est-readonly-banner" hidden>
+        <i class="bi bi-lock-fill"></i> Ini revisi LAMA (riwayat) — sudah dikunci, tidak bisa diedit lagi. Buka revisi terbaru dari "Riwayat Revisi" di atas untuk melanjutkan pengerjaan.
+      </div>
+
+      <div class="project-detail-layout" id="projectDetailLayout">
 
         <!-- Item list column -->
         <div class="project-detail-layout__items">

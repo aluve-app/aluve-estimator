@@ -102,6 +102,44 @@ window.ALUVE.Project = (function () {
   }
 
   /**
+   * FITUR REVISI: bikin salinan quotation ini sebagai revisi baru
+   * (dokumen terpisah di server), dan mengunci quotation yang sekarang
+   * jadi read-only/riwayat. Ini SATU-SATUNYA aksi yang lewat backend
+   * langsung (bukan lewat Storage.saveProject seperti biasa) karena
+   * perlu bikin dokumen baru + kunci dokumen lama sekaligus, atomik di
+   * server — makanya harus nunggu (async), tidak bisa optimistic-update
+   * kayak aksi lain.
+   */
+  async function createRevision(projectId) {
+    if (!window.EstApi) return { success: false, message: 'Tidak terhubung ke server.' };
+    const result = await window.EstApi.call('createQuotationRevision', { project_id: projectId });
+    if (result.success) {
+      // Refresh cache lokal supaya status terkunci & revisi baru langsung
+      // kelihatan tanpa perlu logout-login lagi.
+      const listResult = await window.EstApi.call('listLegacyProjects', { business_id: window.EstApi.businessId() });
+      if (listResult.success) {
+        window.__EST = window.__EST || {};
+        window.__EST.projects = listResult.data;
+      }
+    }
+    return result;
+  }
+
+  /**
+   * @param {string} projectId
+   * @returns {Array<Object>} semua revisi dari 1 quotation yang sama
+   *   (termasuk dirinya sendiri), diurutkan revisi terbaru duluan.
+   */
+  function getRevisionHistory(projectId) {
+    const target = getProject(projectId);
+    if (!target) return [];
+    const rootId = target.rootProjectId || projectId;
+    return Storage.getProjects()
+      .filter(function (p) { return !p.isDeleted && (p.rootProjectId || p.projectId) === rootId; })
+      .sort(function (a, b) { return (b.revisionNumber || 1) - (a.revisionNumber || 1); });
+  }
+
+  /**
    * Case-insensitive search over client name and project name — powers
    * the Dashboard/Project List search box.
    * @param {string} query
@@ -481,6 +519,8 @@ window.ALUVE.Project = (function () {
     restoreProject: restoreProject,
     permanentlyDeleteProject: permanentlyDeleteProject,
     getTrashedProjects: getTrashedProjects,
+    createRevision: createRevision,
+    getRevisionHistory: getRevisionHistory,
     duplicateProject: duplicateProject,
     addItem: addItem,
     updateItem: updateItem,

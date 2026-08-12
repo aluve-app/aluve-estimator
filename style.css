@@ -632,6 +632,13 @@ h1, h2, h3, h4 { font-family: var(--font-display); color: var(--text-primary); m
 }
 
 /* Status chips */
+/* Badge nomor revisi (fitur riwayat quotation) */
+.revision-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 12px; font-weight: 600; color: var(--text-secondary);
+}
+.revision-badge--locked { color: var(--accent-warning); }
+
 .status-chip {
   font-size: 12px;
   font-weight: 600;

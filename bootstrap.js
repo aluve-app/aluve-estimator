@@ -129,7 +129,7 @@
     window.__EST.user = user;
 
     const [projectsRes, catalogRes, settingsRes] = await Promise.all([
-      window.EstApi.call('listLegacyProjects', {}),
+      window.EstApi.call('listLegacyProjects', { business_id: user.business_id }),
       window.EstApi.call('readPriceCatalog', { business_id: user.business_id }),
       window.EstApi.call('readEstimatorSettings', { business_id: user.business_id })
     ]);
@@ -140,12 +140,6 @@
     const enrichResult = ensureCatalogItemIds(rawCatalog);
     window.__EST.catalog = enrichResult.catalog;
 
-    // Kalau ada item yang baru dapat id (pertama kali sejak migrasi),
-    // simpan balik ke server supaya id-nya STABIL untuk semua user
-    // berikutnya (tidak berubah-ubah tiap login). Backend hanya
-    // mengizinkan super_admin — kalau yang login estimator biasa,
-    // percobaan simpan ini akan ditolak (403) dan dilewati diam-diam;
-    // id yang di-generate tadi tetap dipakai LOKAL untuk sesi ini saja.
     if (enrichResult.changed) {
       window.EstApi.call('updatePriceCatalog', {
         business_id: user.business_id,

@@ -533,14 +533,14 @@
       <div class="dg-panel">
         <div class="dg-panel-header">
           <h2 class="dg-panel-title">Pengaturan gambar</h2>
-          <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-toggle-form">Sembunyikan</button>
+          <button type="button" class="dg-icon-toggle" id="btn-toggle-form" aria-label="Sembunyikan/Tampilkan"><i class="bi bi-chevron-up"></i></button>
         </div>
 
         <div id="form-panel-body">
 
           <div class="dg-segment-header">
             <h3>Data proyek</h3>
-            <button type="button" class="btn btn-sm btn-outline-secondary dg-segment-toggle" data-target="seg-data-proyek">Sembunyikan</button>
+            <button type="button" class="dg-icon-toggle dg-segment-toggle" data-target="seg-data-proyek" aria-label="Sembunyikan/Tampilkan"><i class="bi bi-chevron-up"></i></button>
           </div>
           <div class="dg-field-grid" id="seg-data-proyek">
             <div>
@@ -591,7 +591,7 @@
 
           <div class="dg-segment-header">
             <h3>Spesifikasi produk</h3>
-            <button type="button" class="btn btn-sm btn-outline-secondary dg-segment-toggle" data-target="seg-spesifikasi">Sembunyikan</button>
+            <button type="button" class="dg-icon-toggle dg-segment-toggle" data-target="seg-spesifikasi" aria-label="Sembunyikan/Tampilkan"><i class="bi bi-chevron-up"></i></button>
           </div>
           <div id="seg-spesifikasi">
             <div class="dg-field-grid-2col">
@@ -615,7 +615,7 @@
                 </select>
               </div>
               <div>
-                <label class="form-label" for="f-section-count">Jumlah section (kombinasi)</label>
+                <label class="form-label" for="f-section-count">Jumlah section</label>
                 <input class="form-control" id="f-section-count" type="number" value="1" min="1" step="1" placeholder="Contoh: 1">
               </div>
             </div>
@@ -623,7 +623,7 @@
 
           <div class="dg-segment-header">
             <h3>Kombinasi section</h3>
-            <button type="button" class="btn btn-sm btn-outline-secondary dg-segment-toggle" data-target="seg-detail-panel">Sembunyikan</button>
+            <button type="button" class="dg-icon-toggle dg-segment-toggle" data-target="seg-detail-panel" aria-label="Sembunyikan/Tampilkan"><i class="bi bi-chevron-up"></i></button>
           </div>
           <div id="seg-detail-panel">
             <p class="dg-hint" id="section-height-warning" style="display:none;color:#c0392b;">Total tinggi section melebihi tinggi total — kurangi tinggi section manual di atas.</p>
@@ -777,6 +777,30 @@
             <div class="col-12">
               <label class="form-label" for="field-termsAndConditions">Syarat &amp; Ketentuan <span class="text-muted">(satu poin per baris, otomatis diberi nomor)</span></label>
               <textarea class="form-control" rows="6" data-settings="termsAndConditions" id="field-termsAndConditions" placeholder="Pintu dan jendela Aluminium menggunakan profil merek ALUVE&#10;Harga sudah termasuk instalasi &amp; Aksesoris&#10;Waktu preorder produksi barang &#177; 1 bulan sejak diterimanya ukuran fix di lapangan&#10;Harga sudah termasuk PPN 11%"></textarea>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="settings-group">
+          <legend>Generate Drawing — Pilihan Jenis Kaca &amp; Warna Aluminium</legend>
+          <p class="form-text mt-0 mb-3">Kelola daftar pilihan yang muncul di form "Generate Drawing". Perubahan langsung dipakai untuk gambar berikutnya.</p>
+          <div class="row g-4">
+            <div class="col-md-6">
+              <label class="form-label">Jenis Kaca</label>
+              <div id="dgLookupGlassList" class="dg-lookup-list"></div>
+              <div class="input-group mt-2">
+                <input type="text" class="form-control" id="dgLookupGlassInput" placeholder="Contoh: Kaca es 8mm">
+                <button class="btn btn-outline-secondary" type="button" id="dgLookupGlassAdd">Tambah</button>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Warna Aluminium</label>
+              <div id="dgLookupColorList" class="dg-lookup-list"></div>
+              <div class="input-group mt-2">
+                <input type="text" class="form-control" id="dgLookupColorNameInput" placeholder="Nama warna">
+                <input type="color" class="form-control form-control-color" id="dgLookupColorHexInput" value="#7d828c" title="Pilih warna">
+                <button class="btn btn-outline-secondary" type="button" id="dgLookupColorAdd">Tambah</button>
+              </div>
             </div>
           </div>
         </fieldset>

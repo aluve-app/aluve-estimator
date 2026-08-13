@@ -34,6 +34,19 @@
   margin: 0 0 var(--space-3);
 }
 
+.dg-icon-toggle {
+  display: flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; padding: 0; flex-shrink: 0;
+  border-radius: 50%;
+  border: 1px solid var(--border-default);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-standard);
+}
+.dg-icon-toggle:hover { background: var(--bg-surface-hover); }
+.dg-icon-toggle i { font-size: 14px; }
+
 .dg-panel-header, .dg-segment-header {
   display: flex;
   align-items: center;
@@ -125,3 +138,17 @@
 
 .dg-download-all-box { margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--border-default); }
 .dg-download-all-box h3 { font-size: var(--text-sm); font-weight: 600; margin: 0 0 var(--space-3); color: var(--text-primary); text-transform: none; letter-spacing: normal; }
+
+.dg-lookup-list { display: flex; flex-wrap: wrap; gap: 6px; min-height: 32px; padding: 6px 0; }
+.dg-lookup-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 8px 4px 10px; border-radius: 999px;
+  background: var(--bg-surface-hover); border: 1px solid var(--border-default);
+  font-size: 12px; color: var(--text-primary);
+}
+.dg-lookup-chip__swatch { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; border: 1px solid rgba(0,0,0,0.15); }
+.dg-lookup-chip__remove {
+  border: none; background: transparent; color: var(--text-secondary);
+  cursor: pointer; font-size: 14px; line-height: 1; padding: 0 2px;
+}
+.dg-lookup-chip__remove:hover { color: #c0392b; }

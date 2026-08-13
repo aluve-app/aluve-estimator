@@ -212,6 +212,85 @@ window.ALUVE.SettingsPage = (function () {
     reader.readAsText(file);
   }
 
+  /* ----------------------------------------------------------
+     Generate Drawing — kelola pilihan Jenis Kaca & Warna Aluminium
+  ---------------------------------------------------------- */
+
+  function renderDrawingGlassList() {
+    var list = document.getElementById('dgLookupGlassList');
+    if (!list) return;
+    var items = Storage.getDrawingGlassTypes();
+    list.innerHTML = items.map(function (name, i) {
+      return '<span class="dg-lookup-chip">' + Helper.escapeHtml(name) +
+        '<button type="button" class="dg-lookup-chip__remove" data-idx="' + i + '" aria-label="Hapus">&times;</button></span>';
+    }).join('');
+    Array.prototype.forEach.call(list.querySelectorAll('.dg-lookup-chip__remove'), function (btn) {
+      btn.addEventListener('click', function () {
+        var items2 = Storage.getDrawingGlassTypes();
+        items2.splice(parseInt(btn.getAttribute('data-idx'), 10), 1);
+        Storage.saveDrawingGlassTypes(items2);
+        renderDrawingGlassList();
+      });
+    });
+  }
+
+  function renderDrawingColorList() {
+    var list = document.getElementById('dgLookupColorList');
+    if (!list) return;
+    var items = Storage.getDrawingAluColors();
+    list.innerHTML = items.map(function (c, i) {
+      return '<span class="dg-lookup-chip"><span class="dg-lookup-chip__swatch" style="background:' + c.hex + '"></span>' +
+        Helper.escapeHtml(c.label) +
+        '<button type="button" class="dg-lookup-chip__remove" data-idx="' + i + '" aria-label="Hapus">&times;</button></span>';
+    }).join('');
+    Array.prototype.forEach.call(list.querySelectorAll('.dg-lookup-chip__remove'), function (btn) {
+      btn.addEventListener('click', function () {
+        var items2 = Storage.getDrawingAluColors();
+        items2.splice(parseInt(btn.getAttribute('data-idx'), 10), 1);
+        Storage.saveDrawingAluColors(items2);
+        renderDrawingColorList();
+      });
+    });
+  }
+
+  function bindDrawingLookupEvents() {
+    var glassInput = document.getElementById('dgLookupGlassInput');
+    var glassAddBtn = document.getElementById('dgLookupGlassAdd');
+    if (glassAddBtn) {
+      glassAddBtn.addEventListener('click', function () {
+        var val = (glassInput.value || '').trim();
+        if (!val) return;
+        var items = Storage.getDrawingGlassTypes();
+        items.push(val);
+        Storage.saveDrawingGlassTypes(items);
+        glassInput.value = '';
+        renderDrawingGlassList();
+      });
+    }
+
+    var colorNameInput = document.getElementById('dgLookupColorNameInput');
+    var colorHexInput = document.getElementById('dgLookupColorHexInput');
+    var colorAddBtn = document.getElementById('dgLookupColorAdd');
+    if (colorAddBtn) {
+      colorAddBtn.addEventListener('click', function () {
+        var label = (colorNameInput.value || '').trim();
+        if (!label) return;
+        var items = Storage.getDrawingAluColors();
+        items.push({ label: label, hex: colorHexInput.value || '#7d828c' });
+        Storage.saveDrawingAluColors(items);
+        colorNameInput.value = '';
+        renderDrawingColorList();
+      });
+    }
+  }
+
+  function initDrawingLookups() {
+    if (!document.getElementById('dgLookupGlassList')) return; // markup not present
+    renderDrawingGlassList();
+    renderDrawingColorList();
+    bindDrawingLookupEvents();
+  }
+
   function bindEvents() {
     if (dom.logoInput) dom.logoInput.addEventListener('change', handleLogoUpload);
     if (dom.saveBtn) dom.saveBtn.addEventListener('click', saveForm);
@@ -232,6 +311,7 @@ window.ALUVE.SettingsPage = (function () {
     if (!dom.page) return; // settings page markup not present, nothing to wire
     renderFromSettings();
     bindEvents();
+    initDrawingLookups();
 
     // Apply the persisted theme preference on every load (not just when
     // the Settings page happens to be open), so the choice sticks app-wide.

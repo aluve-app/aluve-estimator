@@ -23,7 +23,9 @@ window.ALUVE.Storage = (function () {
     MASTER_PRICES: 'aluve_master_prices',
     SETTINGS: 'aluve_settings',
     PRICE_HISTORY: 'aluve_price_history',
-    DRAWINGS: 'aluve_drawings'
+    DRAWINGS: 'aluve_drawings',
+    DRAWING_GLASS_TYPES: 'aluve_drawing_glass_types',
+    DRAWING_ALU_COLORS: 'aluve_drawing_alu_colors'
   };
 
   const DEFAULT_SETTINGS = {
@@ -326,6 +328,38 @@ window.ALUVE.Storage = (function () {
   }
 
   /* ----------------------------------------------------------
+     Generate Drawing — Admin Lookup (jenis kaca & warna aluminium)
+     ============================================================
+     Supaya Anto bisa tambah/hapus pilihan sendiri dari halaman
+     Pengaturan tanpa perlu minta developer ubah kode. Sama seperti
+     riwayat gambar, ini LocalStorage murni untuk sekarang.
+  ---------------------------------------------------------- */
+
+  const DEFAULT_GLASS_TYPES = ['Kaca clear 5mm', 'Kaca clear 8mm', 'Kaca buram 5mm', 'Kaca tempered 10mm'];
+  const DEFAULT_ALU_COLORS = [
+    { label: 'Grey powder coating', hex: '#7d828c' },
+    { label: 'Black matt', hex: '#2b2b2b' },
+    { label: 'Bronze', hex: '#a9824f' },
+    { label: 'White', hex: '#d8d4c9' }
+  ];
+
+  function getDrawingGlassTypes() {
+    return readJson(KEYS.DRAWING_GLASS_TYPES, DEFAULT_GLASS_TYPES);
+  }
+
+  function saveDrawingGlassTypes(list) {
+    return writeJson(KEYS.DRAWING_GLASS_TYPES, list);
+  }
+
+  function getDrawingAluColors() {
+    return readJson(KEYS.DRAWING_ALU_COLORS, DEFAULT_ALU_COLORS);
+  }
+
+  function saveDrawingAluColors(list) {
+    return writeJson(KEYS.DRAWING_ALU_COLORS, list);
+  }
+
+  /* ----------------------------------------------------------
      Backup / restore (manual JSON export-import of everything)
   ---------------------------------------------------------- */
 
@@ -389,6 +423,10 @@ window.ALUVE.Storage = (function () {
     getDrawings: getDrawings,
     saveDrawing: saveDrawing,
     deleteDrawing: deleteDrawing,
+    getDrawingGlassTypes: getDrawingGlassTypes,
+    saveDrawingGlassTypes: saveDrawingGlassTypes,
+    getDrawingAluColors: getDrawingAluColors,
+    saveDrawingAluColors: saveDrawingAluColors,
     exportBackup: exportBackup,
     importBackup: importBackup
   };

@@ -656,6 +656,27 @@ window.ALUVE.DrawingPage = (function () {
     '<option value="sliding_door">Pintu sliding</option>' +
     '<option value="folding_door">Pintu folding</option>';
 
+  function glassOptionsHtml(selected) {
+    var list = window.ALUVE.Storage.getDrawingGlassTypes();
+    return list.map(function (name) {
+      return '<option' + (name === selected ? ' selected' : '') + '>' + Helper.escapeHtml(name) + '</option>';
+    }).join('');
+  }
+
+  function colorOptionsHtml(selectedHex) {
+    var list = window.ALUVE.Storage.getDrawingAluColors();
+    return list.map(function (c) {
+      return '<option value="' + c.hex + '"' + (c.hex === selectedHex ? ' selected' : '') + '>' + Helper.escapeHtml(c.label) + '</option>';
+    }).join('');
+  }
+
+  function populateColorSelect() {
+    var select = document.getElementById('f-color');
+    var current = select.value;
+    select.innerHTML = colorOptionsHtml(current);
+    if (!select.value) select.selectedIndex = 0;
+  }
+
   function buildSectionBlockHTML(idx, isLast) {
     var m = sectionMeta[idx];
     var tag = idx === 0 ? '(atas)' : (isLast ? '(otomatis, sisa tinggi)' : '');
@@ -678,32 +699,36 @@ window.ALUVE.DrawingPage = (function () {
           '<input class="form-control" id="sec' + idx + '-panel-count" type="number" min="1" max="20" step="1"' + panelCountAttr + '></div>' +
         '</div>' +
         '<div id="sec' + idx + '-panel-tabs" class="dg-panel-tabs"></div>' +
-        '<div class="dg-panel-config-box"><div class="dg-field-grid">' +
-          '<div id="sec' + idx + '-pc-direction-wrap"><label class="form-label" for="sec' + idx + '-pc-direction">Arah bukaan</label>' +
-          '<select class="form-select" id="sec' + idx + '-pc-direction"></select></div>' +
-          '<div><label class="form-label" for="sec' + idx + '-pc-panel-type">Jenis panel</label>' +
-          '<select class="form-select" id="sec' + idx + '-pc-panel-type">' +
-            '<option value="kaca" selected>Kaca</option>' +
-            '<option value="jalusi">Jalusi aluminium</option>' +
-            '<option value="kaca_nako">Kaca nako</option>' +
-            '<option value="panel_acp">Panel ACP</option>' +
-            '<option value="panel_acp_bergaris">Panel ACP bergaris</option>' +
-          '</select></div>' +
-          '<div id="sec' + idx + '-pc-glass-wrap"><label class="form-label" for="sec' + idx + '-pc-glass">Jenis kaca</label>' +
-          '<select class="form-select" id="sec' + idx + '-pc-glass">' +
-            '<option>Kaca clear 5mm</option><option selected>Kaca clear 8mm</option>' +
-            '<option>Kaca buram 5mm</option><option>Kaca tempered 10mm</option>' +
-          '</select></div>' +
-          '<div id="sec' + idx + '-pc-insect-wrap" class="dg-checkbox-row">' +
+        '<div class="dg-panel-config-box">' +
+          '<div id="sec' + idx + '-pc-direction-wrap" style="margin-bottom:var(--space-4);">' +
+            '<label class="form-label" for="sec' + idx + '-pc-direction">Arah bukaan</label>' +
+            '<select class="form-select" id="sec' + idx + '-pc-direction"></select>' +
+          '</div>' +
+          '<div class="dg-field-grid-2col" style="margin-top:0;">' +
+            '<div><label class="form-label" for="sec' + idx + '-pc-panel-type">Jenis panel</label>' +
+            '<select class="form-select" id="sec' + idx + '-pc-panel-type">' +
+              '<option value="kaca" selected>Kaca</option>' +
+              '<option value="jalusi">Jalusi aluminium</option>' +
+              '<option value="kaca_nako">Kaca nako</option>' +
+              '<option value="panel_acp">Panel ACP</option>' +
+              '<option value="panel_acp_bergaris">Panel ACP bergaris</option>' +
+            '</select></div>' +
+            '<div id="sec' + idx + '-pc-glass-wrap"><label class="form-label" for="sec' + idx + '-pc-glass">Jenis kaca</label>' +
+            '<select class="form-select" id="sec' + idx + '-pc-glass">' + glassOptionsHtml('Kaca clear 8mm') + '</select></div>' +
+          '</div>' +
+          '<div id="sec' + idx + '-pc-insect-wrap" class="dg-checkbox-row" style="margin-top:var(--space-4);">' +
           '<input type="checkbox" class="form-check-input" id="sec' + idx + '-pc-insect">' +
           '<label class="form-check-label" for="sec' + idx + '-pc-insect">Tambah insect screen</label></div>' +
-          '<div><label class="form-label" for="sec' + idx + '-pc-ornament-v">Ornamen vertikal (garis)</label>' +
-          '<input class="form-control" id="sec' + idx + '-pc-ornament-v" type="number" min="0" max="12" step="1" placeholder="Contoh: 0"></div>' +
-          '<div><label class="form-label" for="sec' + idx + '-pc-ornament-h">Ornamen horizontal (garis)</label>' +
-          '<input class="form-control" id="sec' + idx + '-pc-ornament-h" type="number" min="0" max="12" step="1" placeholder="Contoh: 0"></div>' +
-          '<div class="dg-checkbox-row"><input type="checkbox" class="form-check-input" id="sec' + idx + '-pc-fixglass">' +
+          '<div class="dg-ornament-title">Ornamen</div>' +
+          '<div class="dg-field-grid-2col" style="margin-top:0;">' +
+            '<div><label class="form-label" for="sec' + idx + '-pc-ornament-v">Vertikal (garis)</label>' +
+            '<input class="form-control" id="sec' + idx + '-pc-ornament-v" type="number" min="0" max="12" step="1" placeholder="Contoh: 0"></div>' +
+            '<div><label class="form-label" for="sec' + idx + '-pc-ornament-h">Horizontal (garis)</label>' +
+            '<input class="form-control" id="sec' + idx + '-pc-ornament-h" type="number" min="0" max="12" step="1" placeholder="Contoh: 0"></div>' +
+          '</div>' +
+          '<div class="dg-checkbox-row" style="margin-top:var(--space-4);"><input type="checkbox" class="form-check-input" id="sec' + idx + '-pc-fixglass">' +
           '<label class="form-check-label" for="sec' + idx + '-pc-fixglass">Kaca mati (fix glass)</label></div>' +
-        '</div></div>' +
+        '</div>' +
       '</div>';
   }
 
@@ -952,19 +977,24 @@ window.ALUVE.DrawingPage = (function () {
      HISTORY (multi-drawing per client)
      ============================================================ */
 
+  function setToggleIcon(btn, collapsed) {
+    var icon = btn.querySelector('i');
+    if (icon) icon.className = collapsed ? 'bi bi-chevron-down' : 'bi bi-chevron-up';
+  }
+
   function toggleFormPanel(forceCollapsed) {
     var body = document.getElementById('form-panel-body');
     var btn = document.getElementById('btn-toggle-form');
     var collapsed = (typeof forceCollapsed === 'boolean') ? forceCollapsed : body.style.display !== 'none';
     body.style.display = collapsed ? 'none' : 'block';
-    btn.textContent = collapsed ? 'Tampilkan' : 'Sembunyikan';
+    setToggleIcon(btn, collapsed);
   }
 
   function toggleSegment(btn) {
     var target = document.getElementById(btn.getAttribute('data-target'));
     var collapsed = target.style.display !== 'none';
     target.style.display = collapsed ? 'none' : '';
-    btn.textContent = collapsed ? 'Tampilkan' : 'Sembunyikan';
+    setToggleIcon(btn, collapsed);
   }
 
   function wireSegmentToggles() {
@@ -1108,6 +1138,7 @@ window.ALUVE.DrawingPage = (function () {
 
   function init() {
     preloadBrandLogos();
+    populateColorSelect();
     document.getElementById('f-date').value = new Date().toISOString().slice(0, 10);
 
     document.getElementById('f-has-revision').addEventListener('change', function () {

@@ -40,12 +40,10 @@
 }
 .tb-brand {
   text-align: center;
-  font-size: 14px;
-  letter-spacing: 1px;
-  padding: 4mm 2mm;
+  padding: 4mm 3mm;
   border-bottom: 0.75px solid #000;
 }
-.tb-brand strong { font-size: 18px; letter-spacing: 2px; }
+.tb-logo { max-width: 44mm; max-height: 14mm; width: auto; height: auto; }
 .tb-field {
   padding: 2mm 3mm;
   border-bottom: 0.75px solid #000;

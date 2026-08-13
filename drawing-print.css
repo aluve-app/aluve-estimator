@@ -23,9 +23,8 @@
 .tb-page {
   display: flex;
   width: 277mm;
-  height: 183mm;
+  height: 172mm;
   border: 0.75px solid #000;
-  page-break-inside: avoid;
   font-family: Arial, Helvetica, sans-serif;
   color: #000;
   overflow: hidden;
@@ -72,7 +71,7 @@
   overflow: hidden;
 }
 .tb-svg-holder { display: flex; justify-content: center; }
-.tb-svg-holder svg { height: 155mm; width: auto; max-width: 200mm; }
+.tb-svg-holder svg { height: 145mm; width: auto; max-width: 200mm; }
 .tb-product-title { margin-top: 4mm; font-size: 13px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; }
 
 /* Screen-only helper classes (used inside the history accordion body,

@@ -73,7 +73,7 @@
 .dg-field-grid > div { flex: 1 1 200px; }
 .dg-field-grid .form-label { font-weight: 500; font-size: var(--text-sm); }
 
-.dg-checkbox-row { display: flex; align-items: center; gap: var(--space-2); flex: 1 1 200px; padding-top: var(--space-6); }
+.dg-checkbox-row { display: flex; align-items: center; gap: var(--space-2); flex: 1 1 200px; }
 .dg-checkbox-row .form-check-label { margin: 0; font-weight: 500; font-size: var(--text-sm); }
 
 .dg-btn-generate { margin-top: var(--space-6); }
@@ -90,7 +90,12 @@
   cursor: pointer;
 }
 .dg-panel-tab-btn.active { background: var(--accent-primary); border-color: var(--accent-primary); color: var(--text-inverse); }
-.dg-panel-config-box { border: 1px solid var(--border-default); border-radius: var(--radius-control); padding: var(--space-4); background: var(--bg-surface-hover); }
+.dg-panel-config-box { border: 1px solid var(--border-default); border-radius: var(--radius-control); padding: var(--space-4); background: var(--bg-surface-hover); margin-top: var(--space-4); }
+
+.dg-ornament-title {
+  font-size: var(--text-sm); font-weight: 600; color: var(--text-primary);
+  margin-top: var(--space-6); margin-bottom: var(--space-2);
+}
 
 .dg-section-block { border: 1px solid var(--border-default); border-radius: var(--radius-control); padding: var(--space-4); margin-bottom: var(--space-4); }
 .dg-section-block:last-child { margin-bottom: 0; }

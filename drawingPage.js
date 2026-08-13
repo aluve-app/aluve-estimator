@@ -719,11 +719,11 @@ window.ALUVE.DrawingPage = (function () {
           '<div id="sec' + idx + '-pc-insect-wrap" class="dg-checkbox-row" style="margin-top:var(--space-4);">' +
           '<input type="checkbox" class="form-check-input" id="sec' + idx + '-pc-insect">' +
           '<label class="form-check-label" for="sec' + idx + '-pc-insect">Tambah insect screen</label></div>' +
-          '<div class="dg-ornament-title">Ornamen</div>' +
+          '<div class="dg-ornament-title">List Ornamen</div>' +
           '<div class="dg-field-grid-2col" style="margin-top:0;">' +
-            '<div><label class="form-label" for="sec' + idx + '-pc-ornament-v">Vertikal (garis)</label>' +
+            '<div><label class="form-label" for="sec' + idx + '-pc-ornament-v">Vertikal</label>' +
             '<input class="form-control" id="sec' + idx + '-pc-ornament-v" type="number" min="0" max="12" step="1" placeholder="Contoh: 0"></div>' +
-            '<div><label class="form-label" for="sec' + idx + '-pc-ornament-h">Horizontal (garis)</label>' +
+            '<div><label class="form-label" for="sec' + idx + '-pc-ornament-h">Horizontal</label>' +
             '<input class="form-control" id="sec' + idx + '-pc-ornament-h" type="number" min="0" max="12" step="1" placeholder="Contoh: 0"></div>' +
           '</div>' +
           '<div class="dg-checkbox-row" style="margin-top:var(--space-4);"><input type="checkbox" class="form-check-input" id="sec' + idx + '-pc-fixglass">' +

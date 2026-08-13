@@ -463,7 +463,7 @@ window.ALUVE.DrawingPage = (function () {
     svg += drawDefs();
 
     var lastSection = data.sections[data.sections.length - 1];
-    var noBottomFrame = lastSection.product === 'swing_door';
+    var noBottomFrame = data.sections.length === 1 && lastSection.product === 'swing_door';
     svg += noBottomFrame
       ? drawFrame3Sides(originX, originY, drawW, drawH, data.color)
       : drawFrame(originX, originY, drawW, drawH, data.color);
@@ -908,15 +908,42 @@ window.ALUVE.DrawingPage = (function () {
     document.getElementById('drawingPrintContainer').innerHTML = html;
   }
 
+  function printWhenReady() {
+    // Preload cache saja tidak menjamin <img> sudah selesai di-paint
+    // browser di frame yang sama — makanya print pertama kali logonya
+    // suka kosong. Di sini kita betul-betul tunggu tiap <img> logo
+    // fire 'load' (atau sudah .complete) sebelum window.print() dipanggil.
+    var imgs = document.querySelectorAll('#drawingPrintContainer img');
+    var pending = 0;
+    var fired = false;
+    function doPrint() {
+      if (fired) return;
+      fired = true;
+      window.print();
+    }
+    Array.prototype.forEach.call(imgs, function (img) {
+      if (!img.complete) {
+        pending++;
+        img.addEventListener('load', function () { if (--pending <= 0) doPrint(); });
+        img.addEventListener('error', function () { if (--pending <= 0) doPrint(); });
+      }
+    });
+    if (pending === 0) {
+      setTimeout(doPrint, 60);
+    } else {
+      setTimeout(doPrint, 1500);
+    }
+  }
+
   function printCurrent() {
     buildPrintAreaSingle(readForm());
-    window.print();
+    printWhenReady();
   }
 
   function printAllDrawings() {
     if (getSavedDrawings().length === 0) return;
     buildPrintAreaAll();
-    window.print();
+    printWhenReady();
   }
 
   /* ============================================================

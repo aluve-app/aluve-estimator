@@ -97,13 +97,8 @@ window.ALUVE.DrawingPage = (function () {
       '" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></marker>';
   }
 
-  function drawMeshDefs() {
-    return '<pattern id="meshGrid" width="5" height="5" patternUnits="userSpaceOnUse">' +
-      '<path d="M0 0H5M0 0V5" stroke="' + LEADER_STROKE + '" stroke-width="0.5" opacity="0.55"/></pattern>';
-  }
-
   function drawDefs() {
-    return '<defs>' + drawArrow() + drawMeshDefs() + '</defs>';
+    return '<defs>' + drawArrow() + '</defs>';
   }
 
   function drawFrame(x, y, w, h, color) {
@@ -198,11 +193,25 @@ window.ALUVE.DrawingPage = (function () {
     return s;
   }
 
+  function drawMeshOverlay(x, y, w, h) {
+    var s = '';
+    var step = 5.5;
+    for (var gx = x; gx <= x + w; gx += step) {
+      s += '<line x1="' + gx + '" y1="' + y + '" x2="' + gx + '" y2="' + (y + h) +
+        '" stroke="' + LEADER_STROKE + '" stroke-width="0.4" opacity="0.5"/>';
+    }
+    for (var gy = y; gy <= y + h; gy += step) {
+      s += '<line x1="' + x + '" y1="' + gy + '" x2="' + (x + w) + '" y2="' + gy +
+        '" stroke="' + LEADER_STROKE + '" stroke-width="0.4" opacity="0.5"/>';
+    }
+    return s;
+  }
+
   function renderPanel(p, idx, cfg, color) {
     var label = (cfg.panelType === 'kaca' || cfg.panelType === 'kaca_nako') ? cfg.glass : '';
     var s = drawPanelContent(p.x, p.y, p.w, p.h, cfg.panelType, label, color);
     if (cfg.insect && (cfg.panelType === 'kaca' || cfg.panelType === 'kaca_nako')) {
-      s += '<rect x="' + p.x + '" y="' + p.y + '" width="' + p.w + '" height="' + p.h + '" fill="url(#meshGrid)"/>';
+      s += drawMeshOverlay(p.x, p.y, p.w, p.h);
     }
     if (cfg.ornamentV || cfg.ornamentH) {
       s += drawOrnamentLines(p.x, p.y, p.w, p.h, cfg.ornamentV, cfg.ornamentH);
@@ -935,11 +944,14 @@ window.ALUVE.DrawingPage = (function () {
     document.getElementById('drawingPrintContainer').innerHTML = html;
   }
 
-  function printWhenReady() {
+  function printWhenReady(suggestedTitle) {
     // Preload cache saja tidak menjamin <img> sudah selesai di-paint
     // browser di frame yang sama — makanya print pertama kali logonya
     // suka kosong. Di sini kita betul-betul tunggu tiap <img> logo
     // fire 'load' (atau sudah .complete) sebelum window.print() dipanggil.
+    var originalTitle = document.title;
+    if (suggestedTitle) document.title = suggestedTitle;
+
     var imgs = document.querySelectorAll('#drawingPrintContainer img');
     var pending = 0;
     var fired = false;
@@ -947,6 +959,7 @@ window.ALUVE.DrawingPage = (function () {
       if (fired) return;
       fired = true;
       window.print();
+      setTimeout(function () { document.title = originalTitle; }, 1000);
     }
     Array.prototype.forEach.call(imgs, function (img) {
       if (!img.complete) {
@@ -962,15 +975,23 @@ window.ALUVE.DrawingPage = (function () {
     }
   }
 
+  function projectFileName(data) {
+    var name = data && data.customer && data.customer !== '-' ? data.customer : 'Generate Drawing';
+    return slugify(name);
+  }
+
   function printCurrent() {
-    buildPrintAreaSingle(readForm());
-    printWhenReady();
+    var data = readForm();
+    buildPrintAreaSingle(data);
+    printWhenReady(data.customer && data.customer !== '-' ? data.customer : 'Generate Drawing');
   }
 
   function printAllDrawings() {
-    if (getSavedDrawings().length === 0) return;
+    var drawings = getSavedDrawings();
+    if (drawings.length === 0) return;
     buildPrintAreaAll();
-    printWhenReady();
+    var first = drawings[drawings.length - 1]; // urutan kronologis, paling lama = klien yang sama
+    printWhenReady(first.customer && first.customer !== '-' ? first.customer : 'Generate Drawing');
   }
 
   /* ============================================================
@@ -1117,7 +1138,7 @@ window.ALUVE.DrawingPage = (function () {
   function downloadPng() {
     var data = readForm();
     var svgString = generateFrontView(data);
-    svgStringToPngDownload(svgString, 'tampak-depan-' + slugify(combinedProductLabel(data)) + '.png', FRONT_VB_W, FRONT_VB_H);
+    svgStringToPngDownload(svgString, projectFileName(data) + '.png', FRONT_VB_W, FRONT_VB_H);
   }
 
   function downloadAllPng() {
@@ -1126,7 +1147,7 @@ window.ALUVE.DrawingPage = (function () {
     allData.forEach(function (d, idx) {
       setTimeout(function () {
         var svgString = generateFrontView(d);
-        var fname = 'tampak-depan-' + (idx + 1) + '-' + slugify(combinedProductLabel(d)) + '.png';
+        var fname = projectFileName(d) + '-' + (idx + 1) + '.png';
         svgStringToPngDownload(svgString, fname, FRONT_VB_W, FRONT_VB_H);
       }, idx * 400);
     });

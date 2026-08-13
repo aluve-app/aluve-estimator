@@ -667,11 +667,13 @@ window.ALUVE.DrawingPage = (function () {
     return '' +
       '<div class="dg-section-block" id="sec' + idx + '-block">' +
         '<div class="dg-section-title">Section ' + (idx + 1) + ' ' + tag + '</div>' +
-        '<div class="dg-field-grid">' +
+        '<div style="margin-bottom:var(--space-4);">' +
+          '<label class="form-label" for="sec' + idx + '-product">Jenis produk</label>' +
+          '<select class="form-select" id="sec' + idx + '-product">' + productOptions + '</select>' +
+        '</div>' +
+        '<div class="dg-field-grid-2col" style="margin-top:0;">' +
           '<div><label class="form-label" for="sec' + idx + '-height">Tinggi section (mm)</label>' +
           '<input class="form-control" id="sec' + idx + '-height" type="number" min="0" step="10" placeholder="Contoh: 2100"' + heightAttr + '></div>' +
-          '<div><label class="form-label" for="sec' + idx + '-product">Jenis produk</label>' +
-          '<select class="form-select" id="sec' + idx + '-product">' + productOptions + '</select></div>' +
           '<div><label class="form-label" for="sec' + idx + '-panel-count">Jumlah panel</label>' +
           '<input class="form-control" id="sec' + idx + '-panel-count" type="number" min="1" max="20" step="1"' + panelCountAttr + '></div>' +
         '</div>' +

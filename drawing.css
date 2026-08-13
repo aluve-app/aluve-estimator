@@ -46,6 +46,17 @@
 .dg-segment-header h3 { margin: 0; }
 
 .dg-field-grid { display: flex; flex-wrap: wrap; gap: var(--space-4); margin-top: var(--space-4); }
+
+.dg-field-grid-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+.dg-field-grid-2col:first-child { margin-top: 0; }
+@media (max-width: 420px) {
+  .dg-field-grid-2col { grid-template-columns: 1fr; }
+}
 .dg-field-grid > div { flex: 1 1 200px; }
 .dg-field-grid .form-label { font-weight: 500; font-size: var(--text-sm); }
 

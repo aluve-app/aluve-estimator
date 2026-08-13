@@ -593,27 +593,31 @@
             <h3>Spesifikasi produk</h3>
             <button type="button" class="btn btn-sm btn-outline-secondary dg-segment-toggle" data-target="seg-spesifikasi">Sembunyikan</button>
           </div>
-          <div class="dg-field-grid" id="seg-spesifikasi">
-            <div>
-              <label class="form-label" for="f-width">Lebar total (mm)</label>
-              <input class="form-control" id="f-width" type="number" min="200" step="10" placeholder="Contoh: 1800">
+          <div id="seg-spesifikasi">
+            <div class="dg-field-grid-2col">
+              <div>
+                <label class="form-label" for="f-width">Lebar total (mm)</label>
+                <input class="form-control" id="f-width" type="number" min="200" step="10" placeholder="Contoh: 1800">
+              </div>
+              <div>
+                <label class="form-label" for="f-height">Tinggi total (mm)</label>
+                <input class="form-control" id="f-height" type="number" min="200" step="10" placeholder="Contoh: 2100">
+              </div>
             </div>
-            <div>
-              <label class="form-label" for="f-height">Tinggi total (mm)</label>
-              <input class="form-control" id="f-height" type="number" min="200" step="10" placeholder="Contoh: 2100">
-            </div>
-            <div>
-              <label class="form-label" for="f-color">Warna aluminium</label>
-              <select class="form-select" id="f-color">
-                <option value="#7d828c" selected>Grey powder coating</option>
-                <option value="#2b2b2b">Black matt</option>
-                <option value="#a9824f">Bronze</option>
-                <option value="#d8d4c9">White</option>
-              </select>
-            </div>
-            <div>
-              <label class="form-label" for="f-section-count">Jumlah section (kombinasi)</label>
-              <input class="form-control" id="f-section-count" type="number" value="1" min="1" step="1" placeholder="Contoh: 1">
+            <div class="dg-field-grid-2col">
+              <div>
+                <label class="form-label" for="f-color">Warna aluminium</label>
+                <select class="form-select" id="f-color">
+                  <option value="#7d828c" selected>Grey powder coating</option>
+                  <option value="#2b2b2b">Black matt</option>
+                  <option value="#a9824f">Bronze</option>
+                  <option value="#d8d4c9">White</option>
+                </select>
+              </div>
+              <div>
+                <label class="form-label" for="f-section-count">Jumlah section (kombinasi)</label>
+                <input class="form-control" id="f-section-count" type="number" value="1" min="1" step="1" placeholder="Contoh: 1">
+              </div>
             </div>
           </div>
 

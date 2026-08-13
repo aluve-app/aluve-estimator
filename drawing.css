@@ -58,6 +58,10 @@
 .dg-panel-tab-btn.active { background: var(--accent-primary); border-color: var(--accent-primary); color: var(--text-inverse); }
 .dg-panel-config-box { border: 1px solid var(--border-default); border-radius: var(--radius-control); padding: var(--space-4); background: var(--bg-surface-hover); }
 
+.dg-section-block { border: 1px solid var(--border-default); border-radius: var(--radius-control); padding: var(--space-4); margin-bottom: var(--space-4); }
+.dg-section-block:last-child { margin-bottom: 0; }
+.dg-section-title { font-size: var(--text-sm); font-weight: 700; color: var(--accent-primary); margin-bottom: var(--space-2); text-transform: uppercase; letter-spacing: 0.03em; }
+
 /* ---------------------------------------------------------
    Result panel — generated drawing cards
 --------------------------------------------------------- */

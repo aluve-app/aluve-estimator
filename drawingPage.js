@@ -66,8 +66,16 @@ window.ALUVE.DrawingPage = (function () {
     nexa: 'NEXA'
   };
 
-  var panelConfigs = [];
-  var activePanelIndex = 0;
+  var BRAND_LOGOS = {
+    optima: 'assets/aluve-optima.png',
+    prima: 'assets/aluve-prima.png',
+    recta: 'assets/aluve-recta.png',
+    nexa: 'assets/aluve-nexa.png'
+  };
+
+  var MAX_SECTIONS = 3;
+  var sectionPanelConfigs = [[], [], []];
+  var sectionActivePanelIndex = [0, 0, 0];
 
   /* ============================================================
      LOW-LEVEL DRAW HELPERS
@@ -385,107 +393,96 @@ window.ALUVE.DrawingPage = (function () {
     return { svg: s, panels: split.panels };
   }
 
+  function callFrontGenerator(product, x, y, w, h, panels, color) {
+    if (product === 'swing_door' || product === 'swing_window') return frontSwing(x, y, w, h, panels, color);
+    if (product === 'swing_jungkit_window') return frontSwingJungkit(x, y, w, h, panels, color);
+    if (product === 'jungkit_window') return frontJungkit(x, y, w, h, panels, color);
+    if (product === 'sliding_door') return frontSliding(x, y, w, h, panels, color);
+    return frontFolding(x, y, w, h, panels, color);
+  }
+
+  function buildSectionDimColumn(sectionPixelInfo, originX, originY, drawH) {
+    var xInner = originX - 24, xOuter = originX - 50;
+    var s = '';
+    sectionPixelInfo.forEach(function (info) {
+      s += extensionLine(originX, info.y, xInner - 6, info.y);
+    });
+    s += extensionLine(originX, originY + drawH, xInner - 6, originY + drawH);
+    sectionPixelInfo.forEach(function (info) {
+      s += '<line x1="' + xInner + '" y1="' + info.y + '" x2="' + xInner + '" y2="' + (info.y + info.h) +
+        '" stroke="' + DIM_STROKE + '" stroke-width="0.6" marker-start="url(#arrow)" marker-end="url(#arrow)"/>';
+      s += '<text x="' + (xInner - 4) + '" y="' + (info.y + info.h / 2) +
+        '" text-anchor="end" dominant-baseline="central" font-size="9" fill="' + DIM_STROKE + '">' + info.heightMM + '</text>';
+    });
+    var totalMM = sectionPixelInfo.reduce(function (sum, i) { return sum + i.heightMM; }, 0);
+    s += extensionLine(originX, originY, xOuter - 8, originY);
+    s += extensionLine(originX, originY + drawH, xOuter - 8, originY + drawH);
+    s += drawDimension(xOuter, originY, xOuter, originY + drawH, totalMM + ' mm', 'v');
+    return s;
+  }
+
   function generateFrontView(data) {
     var VB_W = FRONT_VB_W, VB_H = FRONT_VB_H;
-    var maxW = 300, maxH = 260;
+    var isMulti = data.sections.length > 1;
+    var maxW = isMulti ? 260 : 300, maxH = 260;
     var scale = fitScale(data.width, data.height, maxW, maxH);
     var drawW = data.width * scale, drawH = data.height * scale;
-    var originX = 105, originY = 45;
+    var originX = isMulti ? 130 : 105, originY = 45;
 
     var svg = '<svg viewBox="0 0 ' + VB_W + ' ' + VB_H + '" xmlns="http://www.w3.org/2000/svg">';
     svg += drawDefs();
 
-    var noBottomFrame = data.product === 'swing_door';
+    var lastSection = data.sections[data.sections.length - 1];
+    var noBottomFrame = lastSection.product === 'swing_door';
     svg += noBottomFrame
       ? drawFrame3Sides(originX, originY, drawW, drawH, data.color)
       : drawFrame(originX, originY, drawW, drawH, data.color);
 
-    var result;
-    if (data.product === 'swing_door' || data.product === 'swing_window') {
-      result = frontSwing(originX, originY, drawW, drawH, data.panels, data.color);
-    } else if (data.product === 'swing_jungkit_window') {
-      result = frontSwingJungkit(originX, originY, drawW, drawH, data.panels, data.color);
-    } else if (data.product === 'jungkit_window') {
-      result = frontJungkit(originX, originY, drawW, drawH, data.panels, data.color);
-    } else if (data.product === 'sliding_door') {
-      result = frontSliding(originX, originY, drawW, drawH, data.panels, data.color);
-    } else {
-      result = frontFolding(originX, originY, drawW, drawH, data.panels, data.color);
-    }
-    svg += result.svg;
+    var cumY = originY;
+    var sectionPixelInfo = [];
+    data.sections.forEach(function (sec, idx) {
+      var secH = (sec.heightMM / data.height) * drawH;
+      var result = callFrontGenerator(sec.product, originX, cumY, drawW, secH, sec.panels, data.color);
+      svg += result.svg;
+      sectionPixelInfo.push({ y: cumY, h: secH, heightMM: sec.heightMM, panels: result.panels });
+
+      if (idx < data.sections.length - 1) {
+        svg += '<rect x="' + originX + '" y="' + (cumY + secH - 3) + '" width="' + drawW +
+          '" height="6" fill="' + data.color + '"/>';
+      }
+      cumY += secH;
+    });
 
     var bottomY = originY + drawH;
-    var hasMultiplePanels = result.panels.length > 1;
-    var row1Y = bottomY + 24;
-    var row2Y = hasMultiplePanels ? bottomY + 50 : bottomY + 24;
-
-    if (hasMultiplePanels) {
-      var evenWidthMM = Math.round(data.width / result.panels.length);
-      svg += buildPanelDimRow(result.panels, evenWidthMM, row1Y);
+    if (!isMulti && sectionPixelInfo[0].panels.length > 1) {
+      var row1Y = bottomY + 24;
+      var row2Y = bottomY + 50;
+      var evenWidthMM = Math.round(data.width / sectionPixelInfo[0].panels.length);
+      svg += buildPanelDimRow(sectionPixelInfo[0].panels, evenWidthMM, row1Y);
+      svg += extensionLine(originX, bottomY, originX, row2Y - 8);
+      svg += extensionLine(originX + drawW, bottomY, originX + drawW, row2Y - 8);
+      svg += drawDimension(originX, row2Y, originX + drawW, row2Y, data.width + ' mm', 'h');
+    } else {
+      var rowY = bottomY + 24;
+      svg += extensionLine(originX, bottomY, originX, rowY - 8);
+      svg += extensionLine(originX + drawW, bottomY, originX + drawW, rowY - 8);
+      svg += drawDimension(originX, rowY, originX + drawW, rowY, data.width + ' mm', 'h');
     }
 
-    svg += extensionLine(originX, bottomY, originX, row2Y - 8);
-    svg += extensionLine(originX + drawW, bottomY, originX + drawW, row2Y - 8);
-    svg += drawDimension(originX, row2Y, originX + drawW, row2Y, data.width + ' mm', 'h');
-
-    svg += extensionLine(originX, originY, originX - 40, originY);
-    svg += extensionLine(originX, originY + drawH, originX - 40, originY + drawH);
-    svg += drawDimension(originX - 32, originY, originX - 32, originY + drawH, data.height + ' mm', 'v');
+    if (isMulti) {
+      svg += buildSectionDimColumn(sectionPixelInfo, originX, originY, drawH);
+    } else {
+      svg += extensionLine(originX, originY, originX - 40, originY);
+      svg += extensionLine(originX, originY + drawH, originX - 40, originY + drawH);
+      svg += drawDimension(originX - 32, originY, originX - 32, originY + drawH, data.height + ' mm', 'v');
+    }
 
     svg += '</svg>';
     return svg;
   }
 
   /* ============================================================
-     SECTION GENERATORS
-     ============================================================ */
-
-  function layeredSection(labels, color) {
-    var VB_W = 480, VB_H = 210;
-    var x = 60, y = 70, h = 90;
-    var fillMap = { Frame: '#c7cbd4', Sash: '#9fb0c9', Glass: GLASS_FILL, Seal: '#4a5568', Rubber: '#4a5568', Track: '#7d828c' };
-    var svg = '<svg viewBox="0 0 ' + VB_W + ' ' + VB_H + '" xmlns="http://www.w3.org/2000/svg">';
-    var legend = [];
-
-    labels.forEach(function (label, i) {
-      var w = label === 'Glass' ? 28 : ((label === 'Seal' || label === 'Rubber') ? 12 : 46);
-      var fill = fillMap[label] || '#ccc';
-
-      if (label === 'Frame' || label === 'Sash' || label === 'Track') {
-        svg += '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h +
-          '" fill="' + fill + '" stroke="' + color + '" stroke-width="1"/>';
-        svg += '<rect x="' + (x + 6) + '" y="' + (y + 10) + '" width="' + Math.max(4, w - 12) +
-          '" height="' + (h - 20) + '" fill="#f4f5f7" stroke="' + color + '" stroke-width="0.5"/>';
-      } else if (label === 'Glass') {
-        svg += '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h +
-          '" fill="' + fill + '" stroke="' + GLASS_STROKE + '" stroke-width="1"/>';
-      } else {
-        svg += '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" fill="' + fill + '"/>';
-      }
-
-      var num = i + 1;
-      svg += '<circle cx="' + (x + w / 2) + '" cy="' + (y - 16) + '" r="8" fill="#fff" stroke="' + LEADER_STROKE + '" stroke-width="1"/>';
-      svg += '<text x="' + (x + w / 2) + '" y="' + (y - 16) + '" text-anchor="middle" dominant-baseline="central" font-size="9" fill="' + DIM_STROKE + '">' + num + '</text>';
-      svg += '<line x1="' + (x + w / 2) + '" y1="' + (y - 8) + '" x2="' + (x + w / 2) + '" y2="' + y + '" stroke="' + LEADER_STROKE + '" stroke-width="0.5"/>';
-
-      legend.push('<span class="dg-legend-item"><span class="dg-legend-swatch" style="background:' + fill + '"></span>' + num + '. ' + label + '</span>');
-      x += w + 10;
-    });
-
-    svg += '</svg>';
-    return { svg: svg, legend: '<div class="dg-legend">' + legend.join('') + '</div>' };
-  }
-
-  function generateHorizontalSection(data) {
-    return layeredSection(['Frame', 'Sash', 'Glass', 'Seal', 'Track'], data.color);
-  }
-
-  function generateVerticalSection(data) {
-    return layeredSection(['Frame', 'Sash', 'Glass', 'Rubber', 'Seal'], data.color);
-  }
-
-  /* ============================================================
-     PER-PANEL CONFIG STATE
+     PER-PANEL CONFIG STATE (per section)
      ============================================================ */
 
   function val(id) { return document.getElementById(id).value; }
@@ -512,88 +509,148 @@ window.ALUVE.DrawingPage = (function () {
     };
   }
 
-  function syncPanelConfigsLength() {
-    var product = val('f-product');
-    var count = Math.max(1, parseInt(val('f-panel'), 10) || 1);
+  function syncSectionPanelConfigs(idx) {
+    var product = val('sec' + idx + '-product');
+    var count = Math.max(1, parseInt(val('sec' + idx + '-panel-count'), 10) || 1);
     var validValues = getDirectionOptionsSingle(product).map(function (o) { return o.value; });
+    var arr = sectionPanelConfigs[idx];
 
-    while (panelConfigs.length < count) panelConfigs.push(defaultPanelConfig(product));
-    panelConfigs.length = count;
+    while (arr.length < count) arr.push(defaultPanelConfig(product));
+    arr.length = count;
 
-    panelConfigs.forEach(function (cfg) {
+    arr.forEach(function (cfg) {
       if (validValues.indexOf(cfg.direction) === -1) cfg.direction = validValues[0];
     });
-    if (activePanelIndex >= count) activePanelIndex = count - 1;
+    if (sectionActivePanelIndex[idx] >= count) sectionActivePanelIndex[idx] = count - 1;
   }
 
-  function renderPanelTabs() {
-    var wrap = document.getElementById('panel-tabs');
-    if (panelConfigs.length <= 1) { wrap.innerHTML = ''; wrap.style.display = 'none'; return; }
+  function renderSectionPanelTabs(idx) {
+    var wrap = document.getElementById('sec' + idx + '-panel-tabs');
+    var arr = sectionPanelConfigs[idx];
+    if (arr.length <= 1) { wrap.innerHTML = ''; wrap.style.display = 'none'; return; }
     wrap.style.display = 'flex';
-    wrap.innerHTML = panelConfigs.map(function (cfg, i) {
-      return '<button type="button" class="dg-panel-tab-btn' + (i === activePanelIndex ? ' active' : '') +
+    wrap.innerHTML = arr.map(function (cfg, i) {
+      return '<button type="button" class="dg-panel-tab-btn' + (i === sectionActivePanelIndex[idx] ? ' active' : '') +
         '" data-idx="' + i + '">Panel ' + (i + 1) + '</button>';
     }).join('');
     Array.prototype.forEach.call(wrap.querySelectorAll('.dg-panel-tab-btn'), function (btn) {
       btn.addEventListener('click', function () {
-        saveActivePanelConfig();
-        activePanelIndex = parseInt(btn.getAttribute('data-idx'), 10);
-        renderPanelTabs();
-        loadPanelConfigIntoForm();
+        saveActiveSectionPanelConfig(idx);
+        sectionActivePanelIndex[idx] = parseInt(btn.getAttribute('data-idx'), 10);
+        renderSectionPanelTabs(idx);
+        loadSectionPanelConfigIntoForm(idx);
       });
     });
   }
 
-  function loadPanelConfigIntoForm() {
-    var product = val('f-product');
-    var cfg = panelConfigs[activePanelIndex];
+  function loadSectionPanelConfigIntoForm(idx) {
+    var product = val('sec' + idx + '-product');
+    var cfg = sectionPanelConfigs[idx][sectionActivePanelIndex[idx]];
     if (!cfg) return;
 
-    var dirSelect = document.getElementById('pc-direction');
+    var dirSelect = document.getElementById('sec' + idx + '-pc-direction');
     var opts = getDirectionOptionsSingle(product);
     dirSelect.innerHTML = opts.map(function (o) { return '<option value="' + o.value + '">' + o.label + '</option>'; }).join('');
     dirSelect.value = cfg.direction;
 
-    document.getElementById('pc-panel-type').value = cfg.panelType;
-    document.getElementById('pc-glass').value = cfg.glass;
-    document.getElementById('pc-insect').checked = cfg.insect;
-    document.getElementById('pc-fixglass').checked = cfg.fixGlass;
+    document.getElementById('sec' + idx + '-pc-panel-type').value = cfg.panelType;
+    document.getElementById('sec' + idx + '-pc-glass').value = cfg.glass;
+    document.getElementById('sec' + idx + '-pc-insect').checked = cfg.insect;
+    document.getElementById('sec' + idx + '-pc-fixglass').checked = cfg.fixGlass;
 
-    updatePcVisibility();
+    updateSectionPcVisibility(idx);
   }
 
-  function updatePcVisibility() {
-    var product = val('f-product');
-    var fixGlass = document.getElementById('pc-fixglass').checked;
-    document.getElementById('pc-direction-wrap').style.display = fixGlass ? 'none' : 'block';
-    document.getElementById('pc-insect-wrap').style.display = insectAllowed(product) ? 'flex' : 'none';
-    document.getElementById('pc-glass-wrap').style.display = (val('pc-panel-type') === 'kaca') ? 'block' : 'none';
+  function updateSectionPcVisibility(idx) {
+    var product = val('sec' + idx + '-product');
+    var fixGlass = document.getElementById('sec' + idx + '-pc-fixglass').checked;
+    document.getElementById('sec' + idx + '-pc-direction-wrap').style.display = fixGlass ? 'none' : 'block';
+    document.getElementById('sec' + idx + '-pc-insect-wrap').style.display = insectAllowed(product) ? 'flex' : 'none';
+    document.getElementById('sec' + idx + '-pc-glass-wrap').style.display = (val('sec' + idx + '-pc-panel-type') === 'kaca') ? 'block' : 'none';
   }
 
-  function saveActivePanelConfig() {
-    if (!panelConfigs[activePanelIndex]) return;
-    panelConfigs[activePanelIndex] = {
-      direction: val('pc-direction'),
-      panelType: val('pc-panel-type'),
-      glass: val('pc-glass'),
-      insect: document.getElementById('pc-insect').checked,
-      fixGlass: document.getElementById('pc-fixglass').checked
+  function saveActiveSectionPanelConfig(idx) {
+    var arr = sectionPanelConfigs[idx];
+    var ai = sectionActivePanelIndex[idx];
+    if (!arr[ai]) return;
+    arr[ai] = {
+      direction: val('sec' + idx + '-pc-direction'),
+      panelType: val('sec' + idx + '-pc-panel-type'),
+      glass: val('sec' + idx + '-pc-glass'),
+      insect: document.getElementById('sec' + idx + '-pc-insect').checked,
+      fixGlass: document.getElementById('sec' + idx + '-pc-fixglass').checked
     };
   }
 
-  function onProductOrPanelCountChange() {
-    saveActivePanelConfig();
-    syncPanelConfigsLength();
-    renderPanelTabs();
-    loadPanelConfigIntoForm();
+  function onSectionProductOrCountChange(idx) {
+    saveActiveSectionPanelConfig(idx);
+    syncSectionPanelConfigs(idx);
+    renderSectionPanelTabs(idx);
+    loadSectionPanelConfigIntoForm(idx);
+  }
+
+  /* ----------------------------------------------------------
+     Jumlah section & pembagian tinggi — section terakhir yang
+     TERLIHAT selalu otomatis (sisa dari tinggi total dikurangi
+     section-section manual sebelumnya), sesuai keputusan Anto.
+  ---------------------------------------------------------- */
+
+  function getSectionCount() {
+    return Math.max(1, Math.min(MAX_SECTIONS, parseInt(val('f-section-count'), 10) || 1));
+  }
+
+  function recomputeSectionHeights() {
+    var n = getSectionCount();
+    var total = parseInt(val('f-height'), 10) || 0;
+    var sum = 0;
+    for (var i = 0; i < n - 1; i++) sum += parseInt(val('sec' + i + '-height'), 10) || 0;
+    var lastH = total - sum;
+    if (n >= 1) document.getElementById('sec' + (n - 1) + '-height').value = Math.max(0, lastH);
+    var warn = document.getElementById('section-height-warning');
+    if (warn) warn.style.display = (lastH <= 0 && n > 1) ? 'block' : 'none';
+  }
+
+  function updateSectionHeightFieldStates() {
+    var n = getSectionCount();
+    for (var i = 0; i < n; i++) {
+      document.getElementById('sec' + i + '-height').readOnly = (i === n - 1);
+    }
+  }
+
+  function updateSectionVisibility() {
+    var n = getSectionCount();
+    for (var i = 0; i < MAX_SECTIONS; i++) {
+      document.getElementById('sec' + i + '-block').style.display = (i < n) ? 'block' : 'none';
+    }
+    updateSectionHeightFieldStates();
+    recomputeSectionHeights();
   }
 
   /* ============================================================
      FORM READ / INFO TABLE
      ============================================================ */
 
+  function combinedProductLabel(data) {
+    var labels = data.sections.map(function (s) { return PRODUCT_LABELS[s.product]; });
+    var unique = labels.filter(function (v, i, a) { return a.indexOf(v) === i; });
+    return unique.join(' + ');
+  }
+
   function readForm() {
-    saveActivePanelConfig();
+    var n = getSectionCount();
+    for (var i = 0; i < n; i++) saveActiveSectionPanelConfig(i);
+
+    var sections = [];
+    for (var s = 0; s < n; s++) {
+      sections.push({
+        heightMM: parseInt(val('sec' + s + '-height'), 10) || 0,
+        product: val('sec' + s + '-product'),
+        panels: sectionPanelConfigs[s].map(function (c) {
+          return { direction: c.direction, panelType: c.panelType, glass: c.glass, insect: c.insect, fixGlass: c.fixGlass };
+        })
+      });
+    }
+
     return {
       brand: val('f-brand'),
       customer: val('f-customer') || '-',
@@ -604,32 +661,32 @@ window.ALUVE.DrawingPage = (function () {
       revNo: val('f-rev-no'),
       revDesc: val('f-rev-desc'),
       revDate: val('f-rev-date'),
-      product: val('f-product'),
       width: parseInt(val('f-width'), 10) || 100,
       height: parseInt(val('f-height'), 10) || 100,
       color: val('f-color'),
       colorLabel: document.getElementById('f-color').selectedOptions[0].text,
-      panels: panelConfigs.map(function (c) {
-        return { direction: c.direction, panelType: c.panelType, glass: c.glass, insect: c.insect, fixGlass: c.fixGlass };
-      })
+      sections: sections
     };
   }
 
   function buildInfoRows(data) {
     var areaM2 = ((data.width / 1000) * (data.height / 1000)).toFixed(2);
     var rows = [
-      ['Produk', PRODUCT_LABELS[data.product]],
-      ['Ukuran', data.width + ' x ' + data.height + ' mm'],
-      ['Jumlah panel', data.panels.length],
+      ['Produk', combinedProductLabel(data)],
+      ['Ukuran total', data.width + ' x ' + data.height + ' mm'],
+      ['Jumlah section', data.sections.length],
       ['Profil aluminium', data.colorLabel],
-      ['Luas panel (estimasi)', areaM2 + ' m&sup2;']
+      ['Luas total (estimasi)', areaM2 + ' m&sup2;']
     ];
-    data.panels.forEach(function (cfg, i) {
-      var parts = [];
-      parts.push(cfg.fixGlass ? 'Fix (tidak buka)' : directionLabelFor(data.product, cfg.direction));
-      parts.push(PANEL_TYPE_LABELS[cfg.panelType] + (cfg.panelType === 'kaca' ? ' — ' + cfg.glass : ''));
-      if (insectAllowed(data.product) && cfg.insect) parts.push('+ insect screen');
-      rows.push(['Panel ' + (i + 1), parts.join(' &bull; ')]);
+    data.sections.forEach(function (sec, si) {
+      rows.push(['Section ' + (si + 1), PRODUCT_LABELS[sec.product] + ' — ' + sec.heightMM + ' mm — ' + sec.panels.length + ' panel']);
+      sec.panels.forEach(function (cfg, pi) {
+        var parts = [];
+        parts.push(cfg.fixGlass ? 'Fix (tidak buka)' : directionLabelFor(sec.product, cfg.direction));
+        parts.push(PANEL_TYPE_LABELS[cfg.panelType] + (cfg.panelType === 'kaca' ? ' — ' + cfg.glass : ''));
+        if (insectAllowed(sec.product) && cfg.insect) parts.push('+ insect screen');
+        rows.push(['&nbsp;&nbsp;Panel ' + (pi + 1), parts.join(' &bull; ')]);
+      });
     });
     return rows.map(function (r) { return '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td></tr>'; }).join('');
   }
@@ -643,29 +700,17 @@ window.ALUVE.DrawingPage = (function () {
 
     document.getElementById('view-front').innerHTML = generateFrontView(data);
 
-    var hSec = generateHorizontalSection(data);
-    document.getElementById('view-horizontal').innerHTML = hSec.svg;
-    document.getElementById('legend-horizontal').innerHTML = hSec.legend;
-
-    var vSec = generateVerticalSection(data);
-    document.getElementById('view-vertical').innerHTML = vSec.svg;
-    document.getElementById('legend-vertical').innerHTML = vSec.legend;
-
     document.getElementById('info-table').innerHTML = buildInfoRows(data);
 
-    document.getElementById('r-title').textContent = PRODUCT_LABELS[data.product] + ' — ' + data.width + ' \u00d7 ' + data.height + ' mm';
+    document.getElementById('r-title').textContent = combinedProductLabel(data) + ' — ' + data.width + ' \u00d7 ' + data.height + ' mm';
     document.getElementById('r-meta').textContent = data.customer + ' \u2022 ' + data.ref;
   }
 
   function buildDrawingCardsHTML(data, mode) {
     var frontSvg = generateFrontView(data);
-    var hSec = generateHorizontalSection(data);
-    var vSec = generateVerticalSection(data);
     var infoRows = buildInfoRows(data);
     return '<div class="dg-drawing-grid">' +
       '<div class="dg-card"><h3>Tampak depan</h3><div class="dg-svg-holder">' + frontSvg + '</div></div>' +
-      '<div class="dg-card"><h3>Potongan horizontal</h3><div class="dg-svg-holder">' + hSec.svg + '</div>' + hSec.legend + '</div>' +
-      '<div class="dg-card"><h3>Potongan vertikal</h3><div class="dg-svg-holder">' + vSec.svg + '</div>' + vSec.legend + '</div>' +
       '<div class="dg-card dg-info-card"><h3>Informasi produk</h3><table>' + infoRows + '</table></div>' +
       '</div>';
   }
@@ -673,13 +718,16 @@ window.ALUVE.DrawingPage = (function () {
   function buildFinishingSummary(data) {
     var areaM2 = ((data.width / 1000) * (data.height / 1000)).toFixed(2);
     var lines = [];
-    lines.push(PRODUCT_LABELS[data.product] + ' — ' + data.width + ' x ' + data.height + ' mm');
-    lines.push(data.panels.length + ' panel — ' + data.colorLabel);
+    lines.push(combinedProductLabel(data) + ' — ' + data.width + ' x ' + data.height + ' mm');
+    lines.push(data.sections.length + ' section — ' + data.colorLabel);
     lines.push('Luas ' + areaM2 + ' m&sup2;');
-    data.panels.forEach(function (cfg, i) {
-      var d = cfg.fixGlass ? 'Fix' : directionLabelFor(data.product, cfg.direction);
-      var t = PANEL_TYPE_LABELS[cfg.panelType] + (cfg.panelType === 'kaca' ? ' ' + cfg.glass : '');
-      lines.push('P' + (i + 1) + ': ' + d + ' — ' + t);
+    data.sections.forEach(function (sec, si) {
+      lines.push('Sec' + (si + 1) + ' (' + sec.heightMM + 'mm): ' + PRODUCT_LABELS[sec.product]);
+      sec.panels.forEach(function (cfg, pi) {
+        var d = cfg.fixGlass ? 'Fix' : directionLabelFor(sec.product, cfg.direction);
+        var t = PANEL_TYPE_LABELS[cfg.panelType] + (cfg.panelType === 'kaca' ? ' ' + cfg.glass : '');
+        lines.push('&nbsp;&nbsp;P' + (pi + 1) + ': ' + d + ' — ' + t);
+      });
     });
     return lines.map(function (l) { return '<div>' + l + '</div>'; }).join('');
   }
@@ -696,6 +744,7 @@ window.ALUVE.DrawingPage = (function () {
   }
 
   function buildTitleBlockPage(data, pageBreakBefore) {
+    var logoSrc = BRAND_LOGOS[data.brand] || BRAND_LOGOS.prima;
     var brandLabel = BRAND_LABELS[data.brand] || 'PRIMA';
     var finishing = buildFinishingSummary(data);
     var frontSvg = generateFrontView(data);
@@ -703,7 +752,7 @@ window.ALUVE.DrawingPage = (function () {
 
     return '<div class="tb-page"' + (pageBreakBefore ? ' style="page-break-before:always;"' : '') + '>' +
       '<div class="tb-sidebar">' +
-      '<div class="tb-brand">ALUVE<br><strong>' + brandLabel + '</strong></div>' +
+      '<div class="tb-brand"><img src="' + logoSrc + '" alt="ALUVE ' + brandLabel + '" class="tb-logo"></div>' +
       '<div class="tb-field"><div class="tb-label">PROJECT:</div><div class="tb-value">' + Helper.escapeHtml(data.customer) + '</div></div>' +
       '<div class="tb-field"><div class="tb-label">ADDRESS:</div><div class="tb-value">' + Helper.escapeHtml(data.ref) + '</div></div>' +
       '<div class="tb-field"><div class="tb-label">DATE:</div><div class="tb-value">' + Helper.escapeHtml(data.date || '-') + '</div></div>' +
@@ -717,7 +766,7 @@ window.ALUVE.DrawingPage = (function () {
       '</div>' +
       '<div class="tb-drawing">' +
       '<div class="tb-svg-holder">' + frontSvg + '</div>' +
-      '<div class="tb-product-title">' + PRODUCT_LABELS[data.product] + '</div>' +
+      '<div class="tb-product-title">' + Helper.escapeHtml(combinedProductLabel(data)) + '</div>' +
       '</div>' +
       '</div>';
   }
@@ -784,19 +833,24 @@ window.ALUVE.DrawingPage = (function () {
   }
 
   function resetFormForNext() {
-    document.getElementById('f-product').value = 'swing_door';
     document.getElementById('f-width').value = 900;
     document.getElementById('f-height').value = 2100;
-    document.getElementById('f-panel').value = 1;
+    document.getElementById('f-section-count').value = 1;
     document.getElementById('f-item-code').value = '';
     document.getElementById('f-has-revision').checked = false;
     document.getElementById('f-rev-no').value = '';
     document.getElementById('f-rev-desc').value = '';
     document.getElementById('f-rev-date').value = '';
     document.getElementById('revision-fields-wrap').style.display = 'none';
-    panelConfigs = [];
-    activePanelIndex = 0;
-    onProductOrPanelCountChange();
+
+    document.getElementById('sec0-product').value = 'swing_door';
+    document.getElementById('sec0-panel-count').value = 1;
+    for (var i = 0; i < MAX_SECTIONS; i++) {
+      sectionPanelConfigs[i] = [];
+      sectionActivePanelIndex[i] = 0;
+      onSectionProductOrCountChange(i);
+    }
+    updateSectionVisibility();
   }
 
   function getSavedDrawings() {
@@ -816,7 +870,7 @@ window.ALUVE.DrawingPage = (function () {
     document.getElementById('history-client-name').textContent = Helper.escapeHtml(val('f-customer') || '-');
 
     list.innerHTML = drawings.map(function (item, idx) {
-      var title = PRODUCT_LABELS[item.product] + ' — ' + item.width + '\u00d7' + item.height + ' mm';
+      var title = combinedProductLabel(item) + ' — ' + item.width + '\u00d7' + item.height + ' mm';
       return '<div class="dg-history-item">' +
         '<div class="dg-history-header" data-idx="' + idx + '">' +
         '<span>' + (idx + 1) + '. ' + Helper.escapeHtml(title) + '</span>' +
@@ -881,7 +935,7 @@ window.ALUVE.DrawingPage = (function () {
   function downloadPng() {
     var data = readForm();
     var svgString = generateFrontView(data);
-    svgStringToPngDownload(svgString, 'tampak-depan-' + slugify(PRODUCT_LABELS[data.product]) + '.png', FRONT_VB_W, FRONT_VB_H);
+    svgStringToPngDownload(svgString, 'tampak-depan-' + slugify(combinedProductLabel(data)) + '.png', FRONT_VB_W, FRONT_VB_H);
   }
 
   function downloadAllPng() {
@@ -890,7 +944,7 @@ window.ALUVE.DrawingPage = (function () {
     allData.forEach(function (d, idx) {
       setTimeout(function () {
         var svgString = generateFrontView(d);
-        var fname = 'tampak-depan-' + (idx + 1) + '-' + slugify(PRODUCT_LABELS[d.product]) + '.png';
+        var fname = 'tampak-depan-' + (idx + 1) + '-' + slugify(combinedProductLabel(d)) + '.png';
         svgStringToPngDownload(svgString, fname, FRONT_VB_W, FRONT_VB_H);
       }, idx * 400);
     });
@@ -907,14 +961,21 @@ window.ALUVE.DrawingPage = (function () {
       document.getElementById('revision-fields-wrap').style.display = this.checked ? 'block' : 'none';
     });
 
-    document.getElementById('f-product').addEventListener('change', onProductOrPanelCountChange);
-    document.getElementById('f-panel').addEventListener('input', onProductOrPanelCountChange);
+    document.getElementById('f-section-count').addEventListener('change', updateSectionVisibility);
+    document.getElementById('f-height').addEventListener('input', recomputeSectionHeights);
 
-    document.getElementById('pc-direction').addEventListener('change', function () { saveActivePanelConfig(); });
-    document.getElementById('pc-panel-type').addEventListener('change', function () { saveActivePanelConfig(); updatePcVisibility(); });
-    document.getElementById('pc-glass').addEventListener('change', function () { saveActivePanelConfig(); });
-    document.getElementById('pc-insect').addEventListener('change', function () { saveActivePanelConfig(); });
-    document.getElementById('pc-fixglass').addEventListener('change', function () { saveActivePanelConfig(); updatePcVisibility(); });
+    for (var si = 0; si < MAX_SECTIONS; si++) {
+      (function (idx) {
+        document.getElementById('sec' + idx + '-product').addEventListener('change', function () { onSectionProductOrCountChange(idx); });
+        document.getElementById('sec' + idx + '-panel-count').addEventListener('input', function () { onSectionProductOrCountChange(idx); });
+        document.getElementById('sec' + idx + '-height').addEventListener('input', recomputeSectionHeights);
+        document.getElementById('sec' + idx + '-pc-direction').addEventListener('change', function () { saveActiveSectionPanelConfig(idx); });
+        document.getElementById('sec' + idx + '-pc-panel-type').addEventListener('change', function () { saveActiveSectionPanelConfig(idx); updateSectionPcVisibility(idx); });
+        document.getElementById('sec' + idx + '-pc-glass').addEventListener('change', function () { saveActiveSectionPanelConfig(idx); });
+        document.getElementById('sec' + idx + '-pc-insect').addEventListener('change', function () { saveActiveSectionPanelConfig(idx); });
+        document.getElementById('sec' + idx + '-pc-fixglass').addEventListener('change', function () { saveActiveSectionPanelConfig(idx); updateSectionPcVisibility(idx); });
+      })(si);
+    }
 
     document.getElementById('btn-toggle-form').addEventListener('click', function () { toggleFormPanel(); });
     wireSegmentToggles();
@@ -928,9 +989,12 @@ window.ALUVE.DrawingPage = (function () {
     document.getElementById('btn-download-all-pdf').addEventListener('click', printAllDrawings);
     document.getElementById('btn-download-all-png').addEventListener('click', downloadAllPng);
 
-    syncPanelConfigsLength();
-    renderPanelTabs();
-    loadPanelConfigIntoForm();
+    for (var i = 0; i < MAX_SECTIONS; i++) {
+      syncSectionPanelConfigs(i);
+      renderSectionPanelTabs(i);
+      loadSectionPanelConfigIntoForm(i);
+    }
+    updateSectionVisibility();
     renderHistory();
     renderDrawing();
   }

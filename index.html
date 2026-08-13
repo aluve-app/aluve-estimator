@@ -593,27 +593,12 @@
           </div>
           <div class="dg-field-grid" id="seg-spesifikasi">
             <div>
-              <label class="form-label" for="f-product">Jenis produk</label>
-              <select class="form-select" id="f-product">
-                <option value="swing_door">Pintu swing</option>
-                <option value="swing_window">Jendela swing</option>
-                <option value="jungkit_window">Jendela jungkit</option>
-                <option value="swing_jungkit_window">Jendela swing &amp; jungkit</option>
-                <option value="sliding_door" selected>Pintu sliding</option>
-                <option value="folding_door">Pintu folding</option>
-              </select>
-            </div>
-            <div>
-              <label class="form-label" for="f-width">Lebar (mm)</label>
+              <label class="form-label" for="f-width">Lebar total (mm)</label>
               <input class="form-control" id="f-width" type="number" value="1800" min="200" step="10">
             </div>
             <div>
-              <label class="form-label" for="f-height">Tinggi (mm)</label>
+              <label class="form-label" for="f-height">Tinggi total (mm)</label>
               <input class="form-control" id="f-height" type="number" value="2100" min="200" step="10">
-            </div>
-            <div>
-              <label class="form-label" for="f-panel">Jumlah panel</label>
-              <input class="form-control" id="f-panel" type="number" value="3" min="1" max="6" step="1">
             </div>
             <div>
               <label class="form-label" for="f-color">Warna aluminium</label>
@@ -624,49 +609,211 @@
                 <option value="#d8d4c9">White</option>
               </select>
             </div>
+            <div>
+              <label class="form-label" for="f-section-count">Jumlah section (kombinasi)</label>
+              <select class="form-select" id="f-section-count">
+                <option value="1" selected>1 (tidak dikombinasi)</option>
+                <option value="2">2 section</option>
+                <option value="3">3 section</option>
+              </select>
+            </div>
           </div>
 
           <div class="dg-segment-header">
-            <h3>Detail per panel</h3>
+            <h3>Kombinasi section</h3>
             <button type="button" class="btn btn-sm btn-outline-secondary dg-segment-toggle" data-target="seg-detail-panel">Sembunyikan</button>
           </div>
           <div id="seg-detail-panel">
-            <div id="panel-tabs" class="dg-panel-tabs"></div>
-            <div class="dg-panel-config-box">
-              <div class="dg-field-grid">
-                <div id="pc-direction-wrap">
-                  <label class="form-label" for="pc-direction">Arah bukaan</label>
-                  <select class="form-select" id="pc-direction"></select>
-                </div>
-                <div>
-                  <label class="form-label" for="pc-panel-type">Jenis panel</label>
-                  <select class="form-select" id="pc-panel-type">
-                    <option value="kaca" selected>Kaca</option>
-                    <option value="jalusi">Jalusi aluminium</option>
-                    <option value="kaca_nako">Kaca nako</option>
-                    <option value="panel_acp">Panel ACP</option>
-                    <option value="panel_acp_bergaris">Panel ACP bergaris</option>
-                  </select>
-                </div>
-                <div id="pc-glass-wrap">
-                  <label class="form-label" for="pc-glass">Jenis kaca</label>
-                  <select class="form-select" id="pc-glass">
-                    <option>Kaca clear 5mm</option>
-                    <option selected>Kaca clear 8mm</option>
-                    <option>Kaca buram 5mm</option>
-                    <option>Kaca tempered 10mm</option>
-                  </select>
-                </div>
-                <div id="pc-insect-wrap" class="dg-checkbox-row">
-                  <input type="checkbox" class="form-check-input" id="pc-insect">
-                  <label class="form-check-label" for="pc-insect">Tambah insect screen (kasa nyamuk)</label>
-                </div>
-                <div class="dg-checkbox-row">
-                  <input type="checkbox" class="form-check-input" id="pc-fixglass">
-                  <label class="form-check-label" for="pc-fixglass">Kaca mati (fix glass) — tidak bisa dibuka</label>
-                </div>
-              </div>
+            <p class="dg-hint" id="section-height-warning" style="display:none;color:#c0392b;">Total tinggi section melebihi tinggi total — kurangi tinggi section manual di atas.</p>
+
+      <div class="dg-section-block" id="sec0-block">
+        <div class="dg-section-title">Section 1 (atas)</div>
+        <div class="dg-field-grid">
+          <div>
+            <label class="form-label" for="sec0-height">Tinggi section (mm)</label>
+            <input class="form-control" id="sec0-height" type="number" value="2100" min="0" step="10">
+          </div>
+          <div>
+            <label class="form-label" for="sec0-product">Jenis produk</label>
+            <select class="form-select" id="sec0-product">
+              <option value="swing_door">Pintu swing</option>
+              <option value="swing_window">Jendela swing</option>
+              <option value="jungkit_window">Jendela jungkit</option>
+              <option value="swing_jungkit_window">Jendela swing &amp; jungkit</option>
+              <option value="sliding_door" selected>Pintu sliding</option>
+              <option value="folding_door">Pintu folding</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label" for="sec0-panel-count">Jumlah panel</label>
+            <input class="form-control" id="sec0-panel-count" type="number" value="3" min="1" max="6" step="1">
+          </div>
+        </div>
+
+        <div id="sec0-panel-tabs" class="dg-panel-tabs"></div>
+        <div class="dg-panel-config-box">
+          <div class="dg-field-grid">
+            <div id="sec0-pc-direction-wrap">
+              <label class="form-label" for="sec0-pc-direction">Arah bukaan</label>
+              <select class="form-select" id="sec0-pc-direction"></select>
             </div>
+            <div>
+              <label class="form-label" for="sec0-pc-panel-type">Jenis panel</label>
+              <select class="form-select" id="sec0-pc-panel-type">
+                <option value="kaca" selected>Kaca</option>
+                <option value="jalusi">Jalusi aluminium</option>
+                <option value="kaca_nako">Kaca nako</option>
+                <option value="panel_acp">Panel ACP</option>
+                <option value="panel_acp_bergaris">Panel ACP bergaris</option>
+              </select>
+            </div>
+            <div id="sec0-pc-glass-wrap">
+              <label class="form-label" for="sec0-pc-glass">Jenis kaca</label>
+              <select class="form-select" id="sec0-pc-glass">
+                <option>Kaca clear 5mm</option>
+                <option selected>Kaca clear 8mm</option>
+                <option>Kaca buram 5mm</option>
+                <option>Kaca tempered 10mm</option>
+              </select>
+            </div>
+            <div id="sec0-pc-insect-wrap" class="dg-checkbox-row">
+              <input type="checkbox" class="form-check-input" id="sec0-pc-insect">
+              <label class="form-check-label" for="sec0-pc-insect">Tambah insect screen</label>
+            </div>
+            <div class="dg-checkbox-row">
+              <input type="checkbox" class="form-check-input" id="sec0-pc-fixglass">
+              <label class="form-check-label" for="sec0-pc-fixglass">Kaca mati (fix glass)</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <div class="dg-section-block" id="sec1-block" style="display:none;">
+        <div class="dg-section-title">Section 2 </div>
+        <div class="dg-field-grid">
+          <div>
+            <label class="form-label" for="sec1-height">Tinggi section (mm)</label>
+            <input class="form-control" id="sec1-height" type="number" value="500" min="0" step="10">
+          </div>
+          <div>
+            <label class="form-label" for="sec1-product">Jenis produk</label>
+            <select class="form-select" id="sec1-product">
+              <option value="swing_door" selected>Pintu swing</option>
+              <option value="swing_window">Jendela swing</option>
+              <option value="jungkit_window">Jendela jungkit</option>
+              <option value="swing_jungkit_window">Jendela swing &amp; jungkit</option>
+              <option value="sliding_door">Pintu sliding</option>
+              <option value="folding_door">Pintu folding</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label" for="sec1-panel-count">Jumlah panel</label>
+            <input class="form-control" id="sec1-panel-count" type="number" value="1" min="1" max="6" step="1">
+          </div>
+        </div>
+
+        <div id="sec1-panel-tabs" class="dg-panel-tabs"></div>
+        <div class="dg-panel-config-box">
+          <div class="dg-field-grid">
+            <div id="sec1-pc-direction-wrap">
+              <label class="form-label" for="sec1-pc-direction">Arah bukaan</label>
+              <select class="form-select" id="sec1-pc-direction"></select>
+            </div>
+            <div>
+              <label class="form-label" for="sec1-pc-panel-type">Jenis panel</label>
+              <select class="form-select" id="sec1-pc-panel-type">
+                <option value="kaca" selected>Kaca</option>
+                <option value="jalusi">Jalusi aluminium</option>
+                <option value="kaca_nako">Kaca nako</option>
+                <option value="panel_acp">Panel ACP</option>
+                <option value="panel_acp_bergaris">Panel ACP bergaris</option>
+              </select>
+            </div>
+            <div id="sec1-pc-glass-wrap">
+              <label class="form-label" for="sec1-pc-glass">Jenis kaca</label>
+              <select class="form-select" id="sec1-pc-glass">
+                <option>Kaca clear 5mm</option>
+                <option selected>Kaca clear 8mm</option>
+                <option>Kaca buram 5mm</option>
+                <option>Kaca tempered 10mm</option>
+              </select>
+            </div>
+            <div id="sec1-pc-insect-wrap" class="dg-checkbox-row">
+              <input type="checkbox" class="form-check-input" id="sec1-pc-insect">
+              <label class="form-check-label" for="sec1-pc-insect">Tambah insect screen</label>
+            </div>
+            <div class="dg-checkbox-row">
+              <input type="checkbox" class="form-check-input" id="sec1-pc-fixglass">
+              <label class="form-check-label" for="sec1-pc-fixglass">Kaca mati (fix glass)</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <div class="dg-section-block" id="sec2-block" style="display:none;">
+        <div class="dg-section-title">Section 3 (otomatis, sisa tinggi)</div>
+        <div class="dg-field-grid">
+          <div>
+            <label class="form-label" for="sec2-height">Tinggi section (mm)</label>
+            <input class="form-control" id="sec2-height" type="number" value="400" min="0" step="10">
+          </div>
+          <div>
+            <label class="form-label" for="sec2-product">Jenis produk</label>
+            <select class="form-select" id="sec2-product">
+              <option value="swing_door" selected>Pintu swing</option>
+              <option value="swing_window">Jendela swing</option>
+              <option value="jungkit_window">Jendela jungkit</option>
+              <option value="swing_jungkit_window">Jendela swing &amp; jungkit</option>
+              <option value="sliding_door">Pintu sliding</option>
+              <option value="folding_door">Pintu folding</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label" for="sec2-panel-count">Jumlah panel</label>
+            <input class="form-control" id="sec2-panel-count" type="number" value="1" min="1" max="6" step="1">
+          </div>
+        </div>
+
+        <div id="sec2-panel-tabs" class="dg-panel-tabs"></div>
+        <div class="dg-panel-config-box">
+          <div class="dg-field-grid">
+            <div id="sec2-pc-direction-wrap">
+              <label class="form-label" for="sec2-pc-direction">Arah bukaan</label>
+              <select class="form-select" id="sec2-pc-direction"></select>
+            </div>
+            <div>
+              <label class="form-label" for="sec2-pc-panel-type">Jenis panel</label>
+              <select class="form-select" id="sec2-pc-panel-type">
+                <option value="kaca" selected>Kaca</option>
+                <option value="jalusi">Jalusi aluminium</option>
+                <option value="kaca_nako">Kaca nako</option>
+                <option value="panel_acp">Panel ACP</option>
+                <option value="panel_acp_bergaris">Panel ACP bergaris</option>
+              </select>
+            </div>
+            <div id="sec2-pc-glass-wrap">
+              <label class="form-label" for="sec2-pc-glass">Jenis kaca</label>
+              <select class="form-select" id="sec2-pc-glass">
+                <option>Kaca clear 5mm</option>
+                <option selected>Kaca clear 8mm</option>
+                <option>Kaca buram 5mm</option>
+                <option>Kaca tempered 10mm</option>
+              </select>
+            </div>
+            <div id="sec2-pc-insect-wrap" class="dg-checkbox-row">
+              <input type="checkbox" class="form-check-input" id="sec2-pc-insect">
+              <label class="form-check-label" for="sec2-pc-insect">Tambah insect screen</label>
+            </div>
+            <div class="dg-checkbox-row">
+              <input type="checkbox" class="form-check-input" id="sec2-pc-fixglass">
+              <label class="form-check-label" for="sec2-pc-fixglass">Kaca mati (fix glass)</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
           </div>
 
           <button id="btn-generate" class="btn btn-primary w-100 dg-btn-generate" type="button">Generate drawing</button>
@@ -686,16 +833,6 @@
           <div class="dg-card">
             <h3>Tampak depan</h3>
             <div id="view-front" class="dg-svg-holder"></div>
-          </div>
-          <div class="dg-card">
-            <h3>Potongan horizontal</h3>
-            <div id="view-horizontal" class="dg-svg-holder"></div>
-            <div id="legend-horizontal"></div>
-          </div>
-          <div class="dg-card">
-            <h3>Potongan vertikal</h3>
-            <div id="view-vertical" class="dg-svg-holder"></div>
-            <div id="legend-vertical"></div>
           </div>
           <div class="dg-card dg-info-card">
             <h3>Informasi produk</h3>

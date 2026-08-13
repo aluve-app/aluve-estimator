@@ -7,7 +7,7 @@
    dua alur print ini independen satu sama lain.
    ============================================================ */
 
-@page { size: A4 landscape; margin: 10mm; }
+@page { size: A4 landscape; margin: 0; }
 
 #drawingPrintContainer,
 #drawingPrintContainer * { visibility: visible; }
@@ -17,13 +17,15 @@
   top: 0;
   left: 0;
   width: 100%;
+  padding: 10mm;
+  box-sizing: border-box;
   display: block !important;
 }
 
 .tb-page {
   display: flex;
   width: 277mm;
-  height: 172mm;
+  height: 183mm;
   border: 0.75px solid #000;
   font-family: Arial, Helvetica, sans-serif;
   color: #000;
@@ -71,7 +73,7 @@
   overflow: hidden;
 }
 .tb-svg-holder { display: flex; justify-content: center; }
-.tb-svg-holder svg { height: 145mm; width: auto; max-width: 200mm; }
+.tb-svg-holder svg { height: 155mm; width: auto; max-width: 200mm; }
 .tb-product-title { margin-top: 4mm; font-size: 13px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; }
 
 /* Screen-only helper classes (used inside the history accordion body,

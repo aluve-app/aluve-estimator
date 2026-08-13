@@ -6,6 +6,16 @@
    tidak pernah bentrok dengan class lain di app ini.
    ============================================================ */
 
+.dg-layout {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: var(--space-6);
+  align-items: start;
+}
+@media (max-width: 960px) {
+  .dg-layout { grid-template-columns: 1fr; }
+}
+
 .dg-panel {
   background: var(--bg-surface);
   border: 1px solid var(--border-default);

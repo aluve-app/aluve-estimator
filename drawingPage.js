@@ -73,9 +73,19 @@ window.ALUVE.DrawingPage = (function () {
     nexa: 'assets/aluve-nexa.png'
   };
 
-  var MAX_SECTIONS = 3;
-  var sectionPanelConfigs = [[], [], []];
-  var sectionActivePanelIndex = [0, 0, 0];
+  function preloadBrandLogos() {
+    // Tanpa ini, klik "Print" sebelum browser selesai load <img> logo
+    // (baru pertama kali dipakai) bikin PDF pertama tercetak tanpa logo —
+    // generate/print kedua baru muncul karena sudah ke-cache browser.
+    Object.keys(BRAND_LOGOS).forEach(function (key) {
+      var img = new Image();
+      img.src = BRAND_LOGOS[key];
+    });
+  }
+
+  var sectionPanelConfigs = [];
+  var sectionActivePanelIndex = [];
+  var sectionMeta = [];
 
   /* ============================================================
      LOW-LEVEL DRAW HELPERS
@@ -171,11 +181,31 @@ window.ALUVE.DrawingPage = (function () {
     return drawGlass(x, y, w, h, label);
   }
 
+  function drawOrnamentLines(x, y, w, h, vCount, hCount) {
+    var s = '';
+    var vn = parseInt(vCount, 10) || 0;
+    var hn = parseInt(hCount, 10) || 0;
+    for (var i = 1; i <= vn; i++) {
+      var lx = x + (w * i) / (vn + 1);
+      s += '<line x1="' + lx + '" y1="' + y + '" x2="' + lx + '" y2="' + (y + h) +
+        '" stroke="' + DIM_STROKE + '" stroke-width="0.8" opacity="0.55"/>';
+    }
+    for (var j = 1; j <= hn; j++) {
+      var ly = y + (h * j) / (hn + 1);
+      s += '<line x1="' + x + '" y1="' + ly + '" x2="' + (x + w) + '" y2="' + ly +
+        '" stroke="' + DIM_STROKE + '" stroke-width="0.8" opacity="0.55"/>';
+    }
+    return s;
+  }
+
   function renderPanel(p, idx, cfg, color) {
     var label = (cfg.panelType === 'kaca' || cfg.panelType === 'kaca_nako') ? cfg.glass : '';
     var s = drawPanelContent(p.x, p.y, p.w, p.h, cfg.panelType, label, color);
     if (cfg.insect && (cfg.panelType === 'kaca' || cfg.panelType === 'kaca_nako')) {
       s += '<rect x="' + p.x + '" y="' + p.y + '" width="' + p.w + '" height="' + p.h + '" fill="url(#meshGrid)"/>';
+    }
+    if (cfg.ornamentV || cfg.ornamentH) {
+      s += drawOrnamentLines(p.x, p.y, p.w, p.h, cfg.ornamentV, cfg.ornamentH);
     }
     if (cfg.fixGlass && p.w > 40 && p.h > 24) {
       s += '<text x="' + (p.x + p.w / 2) + '" y="' + (p.y + p.h - 10) +
@@ -296,7 +326,7 @@ window.ALUVE.DrawingPage = (function () {
     var split = splitPanels(x, y, w, h, configs.length, 6);
     var s = '';
     split.mullionRects.forEach(function (m) {
-      s += '<rect x="' + m.x + '" y="' + m.y + '" width="' + m.w + '" height="' + m.h + '" fill="#c7cbd4"/>';
+      s += '<rect x="' + m.x + '" y="' + m.y + '" width="' + m.w + '" height="' + m.h + '" fill="' + color + '"/>';
     });
     split.panels.forEach(function (p, idx) {
       var cfg = configs[idx];
@@ -314,7 +344,7 @@ window.ALUVE.DrawingPage = (function () {
     var split = splitPanels(x, y, w, h, configs.length, 6);
     var s = '';
     split.mullionRects.forEach(function (m) {
-      s += '<rect x="' + m.x + '" y="' + m.y + '" width="' + m.w + '" height="' + m.h + '" fill="#c7cbd4"/>';
+      s += '<rect x="' + m.x + '" y="' + m.y + '" width="' + m.w + '" height="' + m.h + '" fill="' + color + '"/>';
     });
     split.panels.forEach(function (p, idx) {
       var cfg = configs[idx];
@@ -335,7 +365,7 @@ window.ALUVE.DrawingPage = (function () {
     var split = splitPanels(x, y, w, h, configs.length, 6);
     var s = '';
     split.mullionRects.forEach(function (m) {
-      s += '<rect x="' + m.x + '" y="' + m.y + '" width="' + m.w + '" height="' + m.h + '" fill="#c7cbd4"/>';
+      s += '<rect x="' + m.x + '" y="' + m.y + '" width="' + m.w + '" height="' + m.h + '" fill="' + color + '"/>';
     });
     split.panels.forEach(function (p, idx) {
       var cfg = configs[idx];
@@ -359,7 +389,7 @@ window.ALUVE.DrawingPage = (function () {
     var s = '';
     var midY = y + h / 2;
     split.mullionRects.forEach(function (m) {
-      s += '<rect x="' + m.x + '" y="' + m.y + '" width="' + m.w + '" height="' + m.h + '" fill="#c7cbd4"/>';
+      s += '<rect x="' + m.x + '" y="' + m.y + '" width="' + m.w + '" height="' + m.h + '" fill="' + color + '"/>';
       s += drawPostMark(m, midY);
     });
     split.panels.forEach(function (p, idx) {
@@ -505,7 +535,9 @@ window.ALUVE.DrawingPage = (function () {
       panelType: 'kaca',
       glass: 'Kaca clear 8mm',
       insect: false,
-      fixGlass: false
+      fixGlass: false,
+      ornamentV: 0,
+      ornamentH: 0
     };
   }
 
@@ -557,6 +589,8 @@ window.ALUVE.DrawingPage = (function () {
     document.getElementById('sec' + idx + '-pc-glass').value = cfg.glass;
     document.getElementById('sec' + idx + '-pc-insect').checked = cfg.insect;
     document.getElementById('sec' + idx + '-pc-fixglass').checked = cfg.fixGlass;
+    document.getElementById('sec' + idx + '-pc-ornament-v').value = cfg.ornamentV || 0;
+    document.getElementById('sec' + idx + '-pc-ornament-h').value = cfg.ornamentH || 0;
 
     updateSectionPcVisibility(idx);
   }
@@ -578,7 +612,9 @@ window.ALUVE.DrawingPage = (function () {
       panelType: val('sec' + idx + '-pc-panel-type'),
       glass: val('sec' + idx + '-pc-glass'),
       insect: document.getElementById('sec' + idx + '-pc-insect').checked,
-      fixGlass: document.getElementById('sec' + idx + '-pc-fixglass').checked
+      fixGlass: document.getElementById('sec' + idx + '-pc-fixglass').checked,
+      ornamentV: parseInt(val('sec' + idx + '-pc-ornament-v'), 10) || 0,
+      ornamentH: parseInt(val('sec' + idx + '-pc-ornament-h'), 10) || 0
     };
   }
 
@@ -590,13 +626,14 @@ window.ALUVE.DrawingPage = (function () {
   }
 
   /* ----------------------------------------------------------
-     Jumlah section & pembagian tinggi — section terakhir yang
-     TERLIHAT selalu otomatis (sisa dari tinggi total dikurangi
-     section-section manual sebelumnya), sesuai keputusan Anto.
+     Jumlah section & pembagian tinggi — section terakhir SELALU
+     otomatis (sisa dari tinggi total dikurangi section-section
+     manual sebelumnya), sesuai keputusan Anto. Jumlah section
+     tidak dibatasi (Anto minta "open aja").
   ---------------------------------------------------------- */
 
   function getSectionCount() {
-    return Math.max(1, Math.min(MAX_SECTIONS, parseInt(val('f-section-count'), 10) || 1));
+    return Math.max(1, parseInt(val('f-section-count'), 10) || 1);
   }
 
   function recomputeSectionHeights() {
@@ -605,24 +642,114 @@ window.ALUVE.DrawingPage = (function () {
     var sum = 0;
     for (var i = 0; i < n - 1; i++) sum += parseInt(val('sec' + i + '-height'), 10) || 0;
     var lastH = total - sum;
-    if (n >= 1) document.getElementById('sec' + (n - 1) + '-height').value = Math.max(0, lastH);
+    var lastInput = document.getElementById('sec' + (n - 1) + '-height');
+    if (lastInput) lastInput.value = Math.max(0, lastH);
+    if (sectionMeta[n - 1]) sectionMeta[n - 1].heightMM = Math.max(0, lastH);
     var warn = document.getElementById('section-height-warning');
     if (warn) warn.style.display = (lastH <= 0 && n > 1) ? 'block' : 'none';
   }
 
-  function updateSectionHeightFieldStates() {
-    var n = getSectionCount();
+  var PRODUCT_OPTIONS_HTML = '<option value="swing_door">Pintu swing</option>' +
+    '<option value="swing_window">Jendela swing</option>' +
+    '<option value="jungkit_window">Jendela jungkit</option>' +
+    '<option value="swing_jungkit_window">Jendela swing &amp; jungkit</option>' +
+    '<option value="sliding_door">Pintu sliding</option>' +
+    '<option value="folding_door">Pintu folding</option>';
+
+  function buildSectionBlockHTML(idx, isLast) {
+    var m = sectionMeta[idx];
+    var tag = idx === 0 ? '(atas)' : (isLast ? '(otomatis, sisa tinggi)' : '');
+    var heightAttr = m.heightMM ? ' value="' + m.heightMM + '"' : '';
+    var panelCountAttr = m.panelCount ? ' value="' + m.panelCount + '"' : ' value="1"';
+    var productOptions = PRODUCT_OPTIONS_HTML.replace(
+      'value="' + m.product + '"', 'value="' + m.product + '" selected'
+    );
+    return '' +
+      '<div class="dg-section-block" id="sec' + idx + '-block">' +
+        '<div class="dg-section-title">Section ' + (idx + 1) + ' ' + tag + '</div>' +
+        '<div class="dg-field-grid">' +
+          '<div><label class="form-label" for="sec' + idx + '-height">Tinggi section (mm)</label>' +
+          '<input class="form-control" id="sec' + idx + '-height" type="number" min="0" step="10" placeholder="Contoh: 2100"' + heightAttr + '></div>' +
+          '<div><label class="form-label" for="sec' + idx + '-product">Jenis produk</label>' +
+          '<select class="form-select" id="sec' + idx + '-product">' + productOptions + '</select></div>' +
+          '<div><label class="form-label" for="sec' + idx + '-panel-count">Jumlah panel</label>' +
+          '<input class="form-control" id="sec' + idx + '-panel-count" type="number" min="1" max="20" step="1"' + panelCountAttr + '></div>' +
+        '</div>' +
+        '<div id="sec' + idx + '-panel-tabs" class="dg-panel-tabs"></div>' +
+        '<div class="dg-panel-config-box"><div class="dg-field-grid">' +
+          '<div id="sec' + idx + '-pc-direction-wrap"><label class="form-label" for="sec' + idx + '-pc-direction">Arah bukaan</label>' +
+          '<select class="form-select" id="sec' + idx + '-pc-direction"></select></div>' +
+          '<div><label class="form-label" for="sec' + idx + '-pc-panel-type">Jenis panel</label>' +
+          '<select class="form-select" id="sec' + idx + '-pc-panel-type">' +
+            '<option value="kaca" selected>Kaca</option>' +
+            '<option value="jalusi">Jalusi aluminium</option>' +
+            '<option value="kaca_nako">Kaca nako</option>' +
+            '<option value="panel_acp">Panel ACP</option>' +
+            '<option value="panel_acp_bergaris">Panel ACP bergaris</option>' +
+          '</select></div>' +
+          '<div id="sec' + idx + '-pc-glass-wrap"><label class="form-label" for="sec' + idx + '-pc-glass">Jenis kaca</label>' +
+          '<select class="form-select" id="sec' + idx + '-pc-glass">' +
+            '<option>Kaca clear 5mm</option><option selected>Kaca clear 8mm</option>' +
+            '<option>Kaca buram 5mm</option><option>Kaca tempered 10mm</option>' +
+          '</select></div>' +
+          '<div id="sec' + idx + '-pc-insect-wrap" class="dg-checkbox-row">' +
+          '<input type="checkbox" class="form-check-input" id="sec' + idx + '-pc-insect">' +
+          '<label class="form-check-label" for="sec' + idx + '-pc-insect">Tambah insect screen</label></div>' +
+          '<div><label class="form-label" for="sec' + idx + '-pc-ornament-v">Ornamen vertikal (garis)</label>' +
+          '<input class="form-control" id="sec' + idx + '-pc-ornament-v" type="number" min="0" max="12" step="1" placeholder="Contoh: 0"></div>' +
+          '<div><label class="form-label" for="sec' + idx + '-pc-ornament-h">Ornamen horizontal (garis)</label>' +
+          '<input class="form-control" id="sec' + idx + '-pc-ornament-h" type="number" min="0" max="12" step="1" placeholder="Contoh: 0"></div>' +
+          '<div class="dg-checkbox-row"><input type="checkbox" class="form-check-input" id="sec' + idx + '-pc-fixglass">' +
+          '<label class="form-check-label" for="sec' + idx + '-pc-fixglass">Kaca mati (fix glass)</label></div>' +
+        '</div></div>' +
+      '</div>';
+  }
+
+  function saveSectionMetaFromDOM(n) {
     for (var i = 0; i < n; i++) {
-      document.getElementById('sec' + i + '-height').readOnly = (i === n - 1);
+      if (!document.getElementById('sec' + i + '-height')) continue;
+      sectionMeta[i].heightMM = val('sec' + i + '-height');
+      sectionMeta[i].product = val('sec' + i + '-product');
+      sectionMeta[i].panelCount = val('sec' + i + '-panel-count');
     }
   }
 
-  function updateSectionVisibility() {
-    var n = getSectionCount();
-    for (var i = 0; i < MAX_SECTIONS; i++) {
-      document.getElementById('sec' + i + '-block').style.display = (i < n) ? 'block' : 'none';
+  function wireSectionBlock(idx) {
+    document.getElementById('sec' + idx + '-height').addEventListener('input', recomputeSectionHeights);
+    document.getElementById('sec' + idx + '-product').addEventListener('change', function () { onSectionProductOrCountChange(idx); });
+    document.getElementById('sec' + idx + '-panel-count').addEventListener('input', function () { onSectionProductOrCountChange(idx); });
+    document.getElementById('sec' + idx + '-pc-direction').addEventListener('change', function () { saveActiveSectionPanelConfig(idx); });
+    document.getElementById('sec' + idx + '-pc-panel-type').addEventListener('change', function () { saveActiveSectionPanelConfig(idx); updateSectionPcVisibility(idx); });
+    document.getElementById('sec' + idx + '-pc-glass').addEventListener('change', function () { saveActiveSectionPanelConfig(idx); });
+    document.getElementById('sec' + idx + '-pc-insect').addEventListener('change', function () { saveActiveSectionPanelConfig(idx); });
+    document.getElementById('sec' + idx + '-pc-fixglass').addEventListener('change', function () { saveActiveSectionPanelConfig(idx); updateSectionPcVisibility(idx); });
+    document.getElementById('sec' + idx + '-pc-ornament-v').addEventListener('input', function () { saveActiveSectionPanelConfig(idx); });
+    document.getElementById('sec' + idx + '-pc-ornament-h').addEventListener('input', function () { saveActiveSectionPanelConfig(idx); });
+  }
+
+  function ensureSectionMeta(idx) {
+    while (sectionMeta.length <= idx) {
+      sectionMeta.push({ heightMM: '', product: 'swing_door', panelCount: '' });
+      sectionPanelConfigs.push([]);
+      sectionActivePanelIndex.push(0);
     }
-    updateSectionHeightFieldStates();
+  }
+
+  function renderSectionsUI() {
+    var n = getSectionCount();
+    saveSectionMetaFromDOM(Math.min(n, sectionMeta.length));
+    for (var i = 0; i < n; i++) ensureSectionMeta(i);
+
+    var html = '';
+    for (var b = 0; b < n; b++) html += buildSectionBlockHTML(b, b === n - 1);
+    document.getElementById('sections-container').innerHTML = html;
+
+    for (var j = 0; j < n; j++) {
+      wireSectionBlock(j);
+      syncSectionPanelConfigs(j);
+      renderSectionPanelTabs(j);
+      loadSectionPanelConfigIntoForm(j);
+    }
     recomputeSectionHeights();
   }
 
@@ -646,7 +773,7 @@ window.ALUVE.DrawingPage = (function () {
         heightMM: parseInt(val('sec' + s + '-height'), 10) || 0,
         product: val('sec' + s + '-product'),
         panels: sectionPanelConfigs[s].map(function (c) {
-          return { direction: c.direction, panelType: c.panelType, glass: c.glass, insect: c.insect, fixGlass: c.fixGlass };
+          return { direction: c.direction, panelType: c.panelType, glass: c.glass, insect: c.insect, fixGlass: c.fixGlass, ornamentV: c.ornamentV || 0, ornamentH: c.ornamentH || 0 };
         })
       });
     }
@@ -833,8 +960,8 @@ window.ALUVE.DrawingPage = (function () {
   }
 
   function resetFormForNext() {
-    document.getElementById('f-width').value = 900;
-    document.getElementById('f-height').value = 2100;
+    document.getElementById('f-width').value = '';
+    document.getElementById('f-height').value = '';
     document.getElementById('f-section-count').value = 1;
     document.getElementById('f-item-code').value = '';
     document.getElementById('f-has-revision').checked = false;
@@ -843,14 +970,10 @@ window.ALUVE.DrawingPage = (function () {
     document.getElementById('f-rev-date').value = '';
     document.getElementById('revision-fields-wrap').style.display = 'none';
 
-    document.getElementById('sec0-product').value = 'swing_door';
-    document.getElementById('sec0-panel-count').value = 1;
-    for (var i = 0; i < MAX_SECTIONS; i++) {
-      sectionPanelConfigs[i] = [];
-      sectionActivePanelIndex[i] = 0;
-      onSectionProductOrCountChange(i);
-    }
-    updateSectionVisibility();
+    sectionMeta = [];
+    sectionPanelConfigs = [];
+    sectionActivePanelIndex = [];
+    renderSectionsUI();
   }
 
   function getSavedDrawings() {
@@ -955,27 +1078,15 @@ window.ALUVE.DrawingPage = (function () {
      ============================================================ */
 
   function init() {
+    preloadBrandLogos();
     document.getElementById('f-date').value = new Date().toISOString().slice(0, 10);
 
     document.getElementById('f-has-revision').addEventListener('change', function () {
       document.getElementById('revision-fields-wrap').style.display = this.checked ? 'block' : 'none';
     });
 
-    document.getElementById('f-section-count').addEventListener('change', updateSectionVisibility);
+    document.getElementById('f-section-count').addEventListener('input', renderSectionsUI);
     document.getElementById('f-height').addEventListener('input', recomputeSectionHeights);
-
-    for (var si = 0; si < MAX_SECTIONS; si++) {
-      (function (idx) {
-        document.getElementById('sec' + idx + '-product').addEventListener('change', function () { onSectionProductOrCountChange(idx); });
-        document.getElementById('sec' + idx + '-panel-count').addEventListener('input', function () { onSectionProductOrCountChange(idx); });
-        document.getElementById('sec' + idx + '-height').addEventListener('input', recomputeSectionHeights);
-        document.getElementById('sec' + idx + '-pc-direction').addEventListener('change', function () { saveActiveSectionPanelConfig(idx); });
-        document.getElementById('sec' + idx + '-pc-panel-type').addEventListener('change', function () { saveActiveSectionPanelConfig(idx); updateSectionPcVisibility(idx); });
-        document.getElementById('sec' + idx + '-pc-glass').addEventListener('change', function () { saveActiveSectionPanelConfig(idx); });
-        document.getElementById('sec' + idx + '-pc-insect').addEventListener('change', function () { saveActiveSectionPanelConfig(idx); });
-        document.getElementById('sec' + idx + '-pc-fixglass').addEventListener('change', function () { saveActiveSectionPanelConfig(idx); updateSectionPcVisibility(idx); });
-      })(si);
-    }
 
     document.getElementById('btn-toggle-form').addEventListener('click', function () { toggleFormPanel(); });
     wireSegmentToggles();
@@ -989,12 +1100,7 @@ window.ALUVE.DrawingPage = (function () {
     document.getElementById('btn-download-all-pdf').addEventListener('click', printAllDrawings);
     document.getElementById('btn-download-all-png').addEventListener('click', downloadAllPng);
 
-    for (var i = 0; i < MAX_SECTIONS; i++) {
-      syncSectionPanelConfigs(i);
-      renderSectionPanelTabs(i);
-      loadSectionPanelConfigIntoForm(i);
-    }
-    updateSectionVisibility();
+    renderSectionsUI();
     renderHistory();
     renderDrawing();
   }

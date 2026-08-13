@@ -72,8 +72,8 @@
   justify-content: center;
   overflow: hidden;
 }
-.tb-svg-holder { display: flex; justify-content: center; }
-.tb-svg-holder svg { height: 155mm; width: auto; max-width: 200mm; }
+.tb-svg-holder { display: flex; justify-content: center; align-items: center; width: 100%; }
+.tb-svg-holder svg { width: 100%; height: auto; max-height: 165mm; max-width: 205mm; }
 .tb-product-title { margin-top: 4mm; font-size: 13px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; }
 
 /* Screen-only helper classes (used inside the history accordion body,

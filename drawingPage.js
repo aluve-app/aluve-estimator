@@ -48,7 +48,8 @@ window.ALUVE.DrawingPage = (function () {
     jungkit_window: 'Jendela jungkit',
     swing_jungkit_window: 'Jendela swing & jungkit',
     sliding_door: 'Pintu sliding',
-    folding_door: 'Pintu folding'
+    folding_door: 'Pintu folding',
+    fix_glass: 'Kaca mati (fix glass)'
   };
 
   var PANEL_TYPE_LABELS = {
@@ -216,7 +217,7 @@ window.ALUVE.DrawingPage = (function () {
     if (cfg.ornamentV || cfg.ornamentH) {
       s += drawOrnamentLines(p.x, p.y, p.w, p.h, cfg.ornamentV, cfg.ornamentH);
     }
-    if (cfg.fixGlass && p.w > 40 && p.h > 24) {
+    if (cfg.product === 'fix_glass' && p.w > 40 && p.h > 24) {
       s += '<text x="' + (p.x + p.w / 2) + '" y="' + (p.y + p.h - 10) +
         '" text-anchor="middle" font-size="9" fill="' + DIAG_STROKE + '">FIX</text>';
     }
@@ -251,14 +252,6 @@ window.ALUVE.DrawingPage = (function () {
         '" text-anchor="middle" font-size="9" fill="' + DIM_STROKE + '">' + evenWidthMM + '</text>';
     });
     return s;
-  }
-
-  function drawPostMark(m, midY) {
-    var cx = m.x + m.w / 2;
-    return '<line x1="' + (cx - 5) + '" y1="' + midY + '" x2="' + (cx + 5) + '" y2="' + midY +
-      '" stroke="' + DIM_STROKE + '" stroke-width="1"/>' +
-      '<line x1="' + cx + '" y1="' + (midY - 5) + '" x2="' + cx + '" y2="' + (midY + 5) +
-      '" stroke="' + DIM_STROKE + '" stroke-width="1"/>';
   }
 
   function triangleOpenIndicator(apexX, apexY, tx, topY, bottomY) {
@@ -328,116 +321,60 @@ window.ALUVE.DrawingPage = (function () {
   }
 
   /* ============================================================
-     FRONT VIEW GENERATORS — each returns { svg, panels }
+     FRONT VIEW GENERATOR — satu fungsi per baris daun. Tiap daun
+     bisa punya jenis produk sendiri (swing/jungkit/sliding/folding/
+     fix glass), jadi indikator arah bukaan ditentukan per-daun,
+     bukan per-section lagi.
      ============================================================ */
 
-  function frontSwing(x, y, w, h, configs, color) {
-    var split = splitPanels(x, y, w, h, configs.length, 6);
-    var s = '';
-    split.mullionRects.forEach(function (m) {
-      s += '<rect x="' + m.x + '" y="' + m.y + '" width="' + m.w + '" height="' + m.h + '" fill="' + color + '"/>';
-    });
-    split.panels.forEach(function (p, idx) {
-      var cfg = configs[idx];
-      s += renderPanel(p, idx, cfg, color);
-      if (!cfg.fixGlass) {
-        var hingeLeft = cfg.direction === 'kiri';
-        var hx = hingeLeft ? p.x : p.x + p.w, tx = hingeLeft ? p.x + p.w : p.x;
-        s += triangleOpenIndicator(hx, p.y + p.h / 2, tx, p.y, p.y + p.h);
-      }
-    });
-    return { svg: s, panels: split.panels };
+  function drawPanelOpeningIndicator(p, cfg, midY) {
+    if (cfg.product === 'fix_glass') return '';
+
+    if (cfg.product === 'swing_door' || cfg.product === 'swing_window') {
+      var hingeLeft = cfg.direction === 'kiri';
+      var hx = hingeLeft ? p.x : p.x + p.w, tx = hingeLeft ? p.x + p.w : p.x;
+      return triangleOpenIndicator(hx, p.y + p.h / 2, tx, p.y, p.y + p.h);
+    }
+
+    if (cfg.product === 'swing_jungkit_window') {
+      var hingeLeft2 = cfg.direction === 'kiri';
+      var hx2 = hingeLeft2 ? p.x : p.x + p.w, tx2 = hingeLeft2 ? p.x + p.w : p.x;
+      var s = triangleOpenIndicator(hx2, p.y + p.h / 2, tx2, p.y, p.y + p.h);
+      var midx = p.x + p.w / 2, tiltY = p.y + p.h * 0.22;
+      s += '<line x1="' + p.x + '" y1="' + p.y + '" x2="' + midx + '" y2="' + tiltY +
+        '" stroke="' + DIAG_STROKE + '" stroke-width="0.8" stroke-dasharray="2 2" opacity="0.8"/>';
+      s += '<line x1="' + (p.x + p.w) + '" y1="' + p.y + '" x2="' + midx + '" y2="' + tiltY +
+        '" stroke="' + DIAG_STROKE + '" stroke-width="0.8" stroke-dasharray="2 2" opacity="0.8"/>';
+      return s;
+    }
+
+    if (cfg.product === 'jungkit_window') {
+      var midx2 = p.x + p.w / 2;
+      if (cfg.direction === 'bawah') return triangleOpenIndicatorH(midx2, p.y, p.y + p.h, p.x, p.x + p.w);
+      return triangleOpenIndicatorH(midx2, p.y + p.h, p.y, p.x, p.x + p.w);
+    }
+
+    if (cfg.product === 'sliding_door' || cfg.product === 'folding_door') {
+      return drawPanelArrow(p, cfg.direction, midY);
+    }
+
+    return '';
   }
 
-  function frontJungkit(x, y, w, h, configs, color) {
-    var split = splitPanels(x, y, w, h, configs.length, 6);
-    var s = '';
-    split.mullionRects.forEach(function (m) {
-      s += '<rect x="' + m.x + '" y="' + m.y + '" width="' + m.w + '" height="' + m.h + '" fill="' + color + '"/>';
-    });
-    split.panels.forEach(function (p, idx) {
-      var cfg = configs[idx];
-      s += renderPanel(p, idx, cfg, color);
-      if (!cfg.fixGlass) {
-        var midx = p.x + p.w / 2;
-        if (cfg.direction === 'bawah') {
-          s += triangleOpenIndicatorH(midx, p.y, p.y + p.h, p.x, p.x + p.w);
-        } else {
-          s += triangleOpenIndicatorH(midx, p.y + p.h, p.y, p.x, p.x + p.w);
-        }
-      }
-    });
-    return { svg: s, panels: split.panels };
-  }
-
-  function frontSwingJungkit(x, y, w, h, configs, color) {
-    var split = splitPanels(x, y, w, h, configs.length, 6);
-    var s = '';
-    split.mullionRects.forEach(function (m) {
-      s += '<rect x="' + m.x + '" y="' + m.y + '" width="' + m.w + '" height="' + m.h + '" fill="' + color + '"/>';
-    });
-    split.panels.forEach(function (p, idx) {
-      var cfg = configs[idx];
-      s += renderPanel(p, idx, cfg, color);
-      if (!cfg.fixGlass) {
-        var hingeLeft = cfg.direction === 'kiri';
-        var hx = hingeLeft ? p.x : p.x + p.w, tx = hingeLeft ? p.x + p.w : p.x;
-        s += triangleOpenIndicator(hx, p.y + p.h / 2, tx, p.y, p.y + p.h);
-        var midx = p.x + p.w / 2, tiltY = p.y + p.h * 0.22;
-        s += '<line x1="' + p.x + '" y1="' + p.y + '" x2="' + midx + '" y2="' + tiltY +
-          '" stroke="' + DIAG_STROKE + '" stroke-width="0.8" stroke-dasharray="2 2" opacity="0.8"/>';
-        s += '<line x1="' + (p.x + p.w) + '" y1="' + p.y + '" x2="' + midx + '" y2="' + tiltY +
-          '" stroke="' + DIAG_STROKE + '" stroke-width="0.8" stroke-dasharray="2 2" opacity="0.8"/>';
-      }
-    });
-    return { svg: s, panels: split.panels };
-  }
-
-  function frontSliding(x, y, w, h, configs, color) {
+  function renderPanelRow(x, y, w, h, configs, color) {
     var split = splitPanels(x, y, w, h, configs.length, 6);
     var s = '';
     var midY = y + h / 2;
     split.mullionRects.forEach(function (m) {
       s += '<rect x="' + m.x + '" y="' + m.y + '" width="' + m.w + '" height="' + m.h + '" fill="' + color + '"/>';
-      s += drawPostMark(m, midY);
     });
     split.panels.forEach(function (p, idx) {
       s += renderPanel(p, idx, configs[idx], color);
     });
     split.panels.forEach(function (p, idx) {
-      var cfg = configs[idx];
-      if (!cfg.fixGlass) s += drawPanelArrow(p, cfg.direction, midY);
+      s += drawPanelOpeningIndicator(p, configs[idx], midY);
     });
     return { svg: s, panels: split.panels };
-  }
-
-  function frontFolding(x, y, w, h, configs, color) {
-    var split = splitPanels(x, y, w, h, configs.length, 6);
-    var s = '';
-    split.mullionRects.forEach(function (m) {
-      s += '<circle cx="' + (m.x + m.w / 2) + '" cy="' + (m.y + 10) + '" r="2.5" fill="' + DIM_STROKE + '"/>';
-      s += '<circle cx="' + (m.x + m.w / 2) + '" cy="' + (m.y + m.h - 10) + '" r="2.5" fill="' + DIM_STROKE + '"/>';
-    });
-    split.panels.forEach(function (p, idx) {
-      s += renderPanel(p, idx, configs[idx], color);
-    });
-    split.panels.forEach(function (p, idx) {
-      var cfg = configs[idx];
-      if (cfg.fixGlass) return;
-      var toRight = cfg.direction === 'kanan';
-      var ax = toRight ? p.x : p.x + p.w;
-      var tx = toRight ? p.x + p.w : p.x;
-      s += triangleOpenIndicator(ax, p.y + p.h / 2, tx, p.y, p.y + p.h);
-    });
-    return { svg: s, panels: split.panels };
-  }
-
-  function callFrontGenerator(product, x, y, w, h, panels, color) {
-    if (product === 'swing_door' || product === 'swing_window') return frontSwing(x, y, w, h, panels, color);
-    if (product === 'swing_jungkit_window') return frontSwingJungkit(x, y, w, h, panels, color);
-    if (product === 'jungkit_window') return frontJungkit(x, y, w, h, panels, color);
-    if (product === 'sliding_door') return frontSliding(x, y, w, h, panels, color);
-    return frontFolding(x, y, w, h, panels, color);
   }
 
   function buildSectionDimColumn(sectionPixelInfo, originX, originY, drawH) {
@@ -472,7 +409,8 @@ window.ALUVE.DrawingPage = (function () {
     svg += drawDefs();
 
     var lastSection = data.sections[data.sections.length - 1];
-    var noBottomFrame = data.sections.length === 1 && lastSection.product === 'swing_door';
+    var noBottomFrame = data.sections.length === 1 && lastSection.panels.length === 1 &&
+      lastSection.panels[0].product === 'swing_door';
     svg += noBottomFrame
       ? drawFrame3Sides(originX, originY, drawW, drawH, data.color)
       : drawFrame(originX, originY, drawW, drawH, data.color);
@@ -481,7 +419,7 @@ window.ALUVE.DrawingPage = (function () {
     var sectionPixelInfo = [];
     data.sections.forEach(function (sec, idx) {
       var secH = (sec.heightMM / data.height) * drawH;
-      var result = callFrontGenerator(sec.product, originX, cumY, drawW, secH, sec.panels, data.color);
+      var result = renderPanelRow(originX, cumY, drawW, secH, sec.panels, data.color);
       svg += result.svg;
       sectionPixelInfo.push({ y: cumY, h: secH, heightMM: sec.heightMM, panels: result.panels });
 
@@ -539,27 +477,27 @@ window.ALUVE.DrawingPage = (function () {
   }
 
   function defaultPanelConfig(product) {
+    var p = product || 'swing_door';
     return {
-      direction: getDirectionOptionsSingle(product)[0].value,
+      product: p,
+      direction: getDirectionOptionsSingle(p)[0].value,
       panelType: 'kaca',
       glass: 'Kaca clear 8mm',
       insect: false,
-      fixGlass: false,
       ornamentV: 0,
       ornamentH: 0
     };
   }
 
   function syncSectionPanelConfigs(idx) {
-    var product = val('sec' + idx + '-product');
     var count = Math.max(1, parseInt(val('sec' + idx + '-panel-count'), 10) || 1);
-    var validValues = getDirectionOptionsSingle(product).map(function (o) { return o.value; });
     var arr = sectionPanelConfigs[idx];
 
-    while (arr.length < count) arr.push(defaultPanelConfig(product));
+    while (arr.length < count) arr.push(defaultPanelConfig('swing_door'));
     arr.length = count;
 
     arr.forEach(function (cfg) {
+      var validValues = getDirectionOptionsSingle(cfg.product).map(function (o) { return o.value; });
       if (validValues.indexOf(cfg.direction) === -1) cfg.direction = validValues[0];
     });
     if (sectionActivePanelIndex[idx] >= count) sectionActivePanelIndex[idx] = count - 1;
@@ -585,19 +523,19 @@ window.ALUVE.DrawingPage = (function () {
   }
 
   function loadSectionPanelConfigIntoForm(idx) {
-    var product = val('sec' + idx + '-product');
     var cfg = sectionPanelConfigs[idx][sectionActivePanelIndex[idx]];
     if (!cfg) return;
 
+    document.getElementById('sec' + idx + '-pc-product').value = cfg.product;
+
     var dirSelect = document.getElementById('sec' + idx + '-pc-direction');
-    var opts = getDirectionOptionsSingle(product);
+    var opts = getDirectionOptionsSingle(cfg.product);
     dirSelect.innerHTML = opts.map(function (o) { return '<option value="' + o.value + '">' + o.label + '</option>'; }).join('');
     dirSelect.value = cfg.direction;
 
     document.getElementById('sec' + idx + '-pc-panel-type').value = cfg.panelType;
     document.getElementById('sec' + idx + '-pc-glass').value = cfg.glass;
     document.getElementById('sec' + idx + '-pc-insect').checked = cfg.insect;
-    document.getElementById('sec' + idx + '-pc-fixglass').checked = cfg.fixGlass;
     document.getElementById('sec' + idx + '-pc-ornament-v').value = cfg.ornamentV || 0;
     document.getElementById('sec' + idx + '-pc-ornament-h').value = cfg.ornamentH || 0;
 
@@ -605,9 +543,9 @@ window.ALUVE.DrawingPage = (function () {
   }
 
   function updateSectionPcVisibility(idx) {
-    var product = val('sec' + idx + '-product');
-    var fixGlass = document.getElementById('sec' + idx + '-pc-fixglass').checked;
-    document.getElementById('sec' + idx + '-pc-direction-wrap').style.display = fixGlass ? 'none' : 'block';
+    var product = val('sec' + idx + '-pc-product');
+    var isFixGlass = product === 'fix_glass';
+    document.getElementById('sec' + idx + '-pc-direction-wrap').style.display = isFixGlass ? 'none' : 'block';
     document.getElementById('sec' + idx + '-pc-insect-wrap').style.display = insectAllowed(product) ? 'flex' : 'none';
     document.getElementById('sec' + idx + '-pc-glass-wrap').style.display = (val('sec' + idx + '-pc-panel-type') === 'kaca') ? 'block' : 'none';
   }
@@ -617,19 +555,29 @@ window.ALUVE.DrawingPage = (function () {
     var ai = sectionActivePanelIndex[idx];
     if (!arr[ai]) return;
     arr[ai] = {
+      product: val('sec' + idx + '-pc-product'),
       direction: val('sec' + idx + '-pc-direction'),
       panelType: val('sec' + idx + '-pc-panel-type'),
       glass: val('sec' + idx + '-pc-glass'),
       insect: document.getElementById('sec' + idx + '-pc-insect').checked,
-      fixGlass: document.getElementById('sec' + idx + '-pc-fixglass').checked,
       ornamentV: parseInt(val('sec' + idx + '-pc-ornament-v'), 10) || 0,
       ornamentH: parseInt(val('sec' + idx + '-pc-ornament-h'), 10) || 0
     };
   }
 
+  function onSectionPanelProductChange(idx) {
+    saveActiveSectionPanelConfig(idx);
+    var arr = sectionPanelConfigs[idx];
+    var ai = sectionActivePanelIndex[idx];
+    if (arr[ai]) {
+      var validValues = getDirectionOptionsSingle(arr[ai].product).map(function (o) { return o.value; });
+      if (validValues.indexOf(arr[ai].direction) === -1) arr[ai].direction = validValues[0];
+    }
+    loadSectionPanelConfigIntoForm(idx);
+  }
+
   function onSectionProductOrCountChange(idx) {
     if (sectionMeta[idx]) {
-      sectionMeta[idx].product = val('sec' + idx + '-product');
       sectionMeta[idx].panelCount = val('sec' + idx + '-panel-count');
     }
     saveActiveSectionPanelConfig(idx);
@@ -695,16 +643,9 @@ window.ALUVE.DrawingPage = (function () {
     var tag = idx === 0 ? '(atas)' : (isLast ? '(otomatis, sisa tinggi)' : '');
     var heightAttr = m.heightMM ? ' value="' + m.heightMM + '"' : '';
     var panelCountAttr = m.panelCount ? ' value="' + m.panelCount + '"' : ' value="1"';
-    var productOptions = PRODUCT_OPTIONS_HTML.replace(
-      'value="' + m.product + '"', 'value="' + m.product + '" selected'
-    );
     return '' +
       '<div class="dg-section-block" id="sec' + idx + '-block">' +
         '<div class="dg-section-title">Section ' + (idx + 1) + ' ' + tag + '</div>' +
-        '<div style="margin-bottom:var(--space-4);">' +
-          '<label class="form-label" for="sec' + idx + '-product">Jenis produk</label>' +
-          '<select class="form-select" id="sec' + idx + '-product">' + productOptions + '</select>' +
-        '</div>' +
         '<div class="dg-field-grid-2col" style="margin-top:0;">' +
           '<div><label class="form-label" for="sec' + idx + '-height">Tinggi section (mm)</label>' +
           '<input class="form-control" id="sec' + idx + '-height" type="number" min="0" step="10" placeholder="Contoh: 2100"' + heightAttr + '></div>' +
@@ -712,7 +653,14 @@ window.ALUVE.DrawingPage = (function () {
           '<input class="form-control" id="sec' + idx + '-panel-count" type="number" min="1" max="20" step="1"' + panelCountAttr + '></div>' +
         '</div>' +
         '<div id="sec' + idx + '-panel-tabs" class="dg-panel-tabs"></div>' +
+        '<p class="dg-hint" style="margin-top:0;">Tiap daun bisa punya jenis produk sendiri — pindah tab untuk atur daun lain.</p>' +
         '<div class="dg-panel-config-box">' +
+          '<div style="margin-bottom:var(--space-4);">' +
+            '<label class="form-label" for="sec' + idx + '-pc-product">Jenis produk (daun ini)</label>' +
+            '<select class="form-select" id="sec' + idx + '-pc-product">' + PRODUCT_OPTIONS_HTML +
+              '<option value="fix_glass">Kaca mati (fix glass)</option>' +
+            '</select>' +
+          '</div>' +
           '<div id="sec' + idx + '-pc-direction-wrap" style="margin-bottom:var(--space-4);">' +
             '<label class="form-label" for="sec' + idx + '-pc-direction">Arah bukaan</label>' +
             '<select class="form-select" id="sec' + idx + '-pc-direction"></select>' +
@@ -739,8 +687,6 @@ window.ALUVE.DrawingPage = (function () {
             '<div><label class="form-label" for="sec' + idx + '-pc-ornament-h">Horizontal</label>' +
             '<input class="form-control" id="sec' + idx + '-pc-ornament-h" type="number" min="0" max="12" step="1" placeholder="Contoh: 0"></div>' +
           '</div>' +
-          '<div class="dg-checkbox-row" style="margin-top:var(--space-4);"><input type="checkbox" class="form-check-input" id="sec' + idx + '-pc-fixglass">' +
-          '<label class="form-check-label" for="sec' + idx + '-pc-fixglass">Kaca mati (fix glass)</label></div>' +
         '</div>' +
       '</div>';
   }
@@ -749,27 +695,25 @@ window.ALUVE.DrawingPage = (function () {
     for (var i = 0; i < n; i++) {
       if (!document.getElementById('sec' + i + '-height')) continue;
       sectionMeta[i].heightMM = val('sec' + i + '-height');
-      sectionMeta[i].product = val('sec' + i + '-product');
       sectionMeta[i].panelCount = val('sec' + i + '-panel-count');
     }
   }
 
   function wireSectionBlock(idx) {
     document.getElementById('sec' + idx + '-height').addEventListener('input', recomputeSectionHeights);
-    document.getElementById('sec' + idx + '-product').addEventListener('change', function () { onSectionProductOrCountChange(idx); });
     document.getElementById('sec' + idx + '-panel-count').addEventListener('input', function () { onSectionProductOrCountChange(idx); });
+    document.getElementById('sec' + idx + '-pc-product').addEventListener('change', function () { onSectionPanelProductChange(idx); });
     document.getElementById('sec' + idx + '-pc-direction').addEventListener('change', function () { saveActiveSectionPanelConfig(idx); });
     document.getElementById('sec' + idx + '-pc-panel-type').addEventListener('change', function () { saveActiveSectionPanelConfig(idx); updateSectionPcVisibility(idx); });
     document.getElementById('sec' + idx + '-pc-glass').addEventListener('change', function () { saveActiveSectionPanelConfig(idx); });
     document.getElementById('sec' + idx + '-pc-insect').addEventListener('change', function () { saveActiveSectionPanelConfig(idx); });
-    document.getElementById('sec' + idx + '-pc-fixglass').addEventListener('change', function () { saveActiveSectionPanelConfig(idx); updateSectionPcVisibility(idx); });
     document.getElementById('sec' + idx + '-pc-ornament-v').addEventListener('input', function () { saveActiveSectionPanelConfig(idx); });
     document.getElementById('sec' + idx + '-pc-ornament-h').addEventListener('input', function () { saveActiveSectionPanelConfig(idx); });
   }
 
   function ensureSectionMeta(idx) {
     while (sectionMeta.length <= idx) {
-      sectionMeta.push({ heightMM: '', product: 'swing_door', panelCount: '' });
+      sectionMeta.push({ heightMM: '', panelCount: '' });
       sectionPanelConfigs.push([]);
       sectionActivePanelIndex.push(0);
     }
@@ -798,7 +742,10 @@ window.ALUVE.DrawingPage = (function () {
      ============================================================ */
 
   function combinedProductLabel(data) {
-    var labels = data.sections.map(function (s) { return PRODUCT_LABELS[s.product]; });
+    var labels = [];
+    data.sections.forEach(function (s) {
+      s.panels.forEach(function (p) { labels.push(PRODUCT_LABELS[p.product]); });
+    });
     var unique = labels.filter(function (v, i, a) { return a.indexOf(v) === i; });
     return unique.join(' + ');
   }
@@ -811,9 +758,8 @@ window.ALUVE.DrawingPage = (function () {
     for (var s = 0; s < n; s++) {
       sections.push({
         heightMM: parseInt(val('sec' + s + '-height'), 10) || 0,
-        product: val('sec' + s + '-product'),
         panels: sectionPanelConfigs[s].map(function (c) {
-          return { direction: c.direction, panelType: c.panelType, glass: c.glass, insect: c.insect, fixGlass: c.fixGlass, ornamentV: c.ornamentV || 0, ornamentH: c.ornamentH || 0 };
+          return { product: c.product, direction: c.direction, panelType: c.panelType, glass: c.glass, insect: c.insect, ornamentV: c.ornamentV || 0, ornamentH: c.ornamentH || 0 };
         })
       });
     }
@@ -846,12 +792,13 @@ window.ALUVE.DrawingPage = (function () {
       ['Luas total (estimasi)', areaM2 + ' m&sup2;']
     ];
     data.sections.forEach(function (sec, si) {
-      rows.push(['Section ' + (si + 1), PRODUCT_LABELS[sec.product] + ' — ' + sec.heightMM + ' mm — ' + sec.panels.length + ' daun']);
+      rows.push(['Section ' + (si + 1), sec.heightMM + ' mm — ' + sec.panels.length + ' daun']);
       sec.panels.forEach(function (cfg, pi) {
         var parts = [];
-        parts.push(cfg.fixGlass ? 'Fix (tidak buka)' : directionLabelFor(sec.product, cfg.direction));
+        parts.push(PRODUCT_LABELS[cfg.product]);
+        if (cfg.product !== 'fix_glass') parts.push(directionLabelFor(cfg.product, cfg.direction));
         parts.push(PANEL_TYPE_LABELS[cfg.panelType] + (cfg.panelType === 'kaca' ? ' — ' + cfg.glass : ''));
-        if (insectAllowed(sec.product) && cfg.insect) parts.push('+ insect screen');
+        if (insectAllowed(cfg.product) && cfg.insect) parts.push('+ insect screen');
         rows.push(['&nbsp;&nbsp;Daun ' + (pi + 1), parts.join(' &bull; ')]);
       });
     });
@@ -889,11 +836,11 @@ window.ALUVE.DrawingPage = (function () {
     lines.push(data.sections.length + ' section — ' + data.colorLabel);
     lines.push('Luas ' + areaM2 + ' m&sup2;');
     data.sections.forEach(function (sec, si) {
-      lines.push('Sec' + (si + 1) + ' (' + sec.heightMM + 'mm): ' + PRODUCT_LABELS[sec.product]);
+      lines.push('Sec' + (si + 1) + ' (' + sec.heightMM + 'mm)');
       sec.panels.forEach(function (cfg, pi) {
-        var d = cfg.fixGlass ? 'Fix' : directionLabelFor(sec.product, cfg.direction);
+        var d = cfg.product === 'fix_glass' ? 'Fix' : directionLabelFor(cfg.product, cfg.direction);
         var t = PANEL_TYPE_LABELS[cfg.panelType] + (cfg.panelType === 'kaca' ? ' ' + cfg.glass : '');
-        lines.push('&nbsp;&nbsp;D' + (pi + 1) + ': ' + d + ' — ' + t);
+        lines.push('&nbsp;&nbsp;D' + (pi + 1) + ' (' + PRODUCT_LABELS[cfg.product] + '): ' + d + ' — ' + t);
       });
     });
     return lines.map(function (l) { return '<div>' + l + '</div>'; }).join('');

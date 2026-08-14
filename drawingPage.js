@@ -572,7 +572,7 @@ window.ALUVE.DrawingPage = (function () {
     wrap.style.display = 'flex';
     wrap.innerHTML = arr.map(function (cfg, i) {
       return '<button type="button" class="dg-panel-tab-btn' + (i === sectionActivePanelIndex[idx] ? ' active' : '') +
-        '" data-idx="' + i + '">Panel ' + (i + 1) + '</button>';
+        '" data-idx="' + i + '">Daun ' + (i + 1) + '</button>';
     }).join('');
     Array.prototype.forEach.call(wrap.querySelectorAll('.dg-panel-tab-btn'), function (btn) {
       btn.addEventListener('click', function () {
@@ -628,6 +628,10 @@ window.ALUVE.DrawingPage = (function () {
   }
 
   function onSectionProductOrCountChange(idx) {
+    if (sectionMeta[idx]) {
+      sectionMeta[idx].product = val('sec' + idx + '-product');
+      sectionMeta[idx].panelCount = val('sec' + idx + '-panel-count');
+    }
     saveActiveSectionPanelConfig(idx);
     syncSectionPanelConfigs(idx);
     renderSectionPanelTabs(idx);
@@ -704,7 +708,7 @@ window.ALUVE.DrawingPage = (function () {
         '<div class="dg-field-grid-2col" style="margin-top:0;">' +
           '<div><label class="form-label" for="sec' + idx + '-height">Tinggi section (mm)</label>' +
           '<input class="form-control" id="sec' + idx + '-height" type="number" min="0" step="10" placeholder="Contoh: 2100"' + heightAttr + '></div>' +
-          '<div><label class="form-label" for="sec' + idx + '-panel-count">Jumlah panel</label>' +
+          '<div><label class="form-label" for="sec' + idx + '-panel-count">Jumlah daun</label>' +
           '<input class="form-control" id="sec' + idx + '-panel-count" type="number" min="1" max="20" step="1"' + panelCountAttr + '></div>' +
         '</div>' +
         '<div id="sec' + idx + '-panel-tabs" class="dg-panel-tabs"></div>' +
@@ -714,7 +718,7 @@ window.ALUVE.DrawingPage = (function () {
             '<select class="form-select" id="sec' + idx + '-pc-direction"></select>' +
           '</div>' +
           '<div class="dg-field-grid-2col" style="margin-top:0;">' +
-            '<div><label class="form-label" for="sec' + idx + '-pc-panel-type">Jenis panel</label>' +
+            '<div><label class="form-label" for="sec' + idx + '-pc-panel-type">Jenis daun</label>' +
             '<select class="form-select" id="sec' + idx + '-pc-panel-type">' +
               '<option value="kaca" selected>Kaca</option>' +
               '<option value="jalusi">Jalusi aluminium</option>' +
@@ -842,13 +846,13 @@ window.ALUVE.DrawingPage = (function () {
       ['Luas total (estimasi)', areaM2 + ' m&sup2;']
     ];
     data.sections.forEach(function (sec, si) {
-      rows.push(['Section ' + (si + 1), PRODUCT_LABELS[sec.product] + ' — ' + sec.heightMM + ' mm — ' + sec.panels.length + ' panel']);
+      rows.push(['Section ' + (si + 1), PRODUCT_LABELS[sec.product] + ' — ' + sec.heightMM + ' mm — ' + sec.panels.length + ' daun']);
       sec.panels.forEach(function (cfg, pi) {
         var parts = [];
         parts.push(cfg.fixGlass ? 'Fix (tidak buka)' : directionLabelFor(sec.product, cfg.direction));
         parts.push(PANEL_TYPE_LABELS[cfg.panelType] + (cfg.panelType === 'kaca' ? ' — ' + cfg.glass : ''));
         if (insectAllowed(sec.product) && cfg.insect) parts.push('+ insect screen');
-        rows.push(['&nbsp;&nbsp;Panel ' + (pi + 1), parts.join(' &bull; ')]);
+        rows.push(['&nbsp;&nbsp;Daun ' + (pi + 1), parts.join(' &bull; ')]);
       });
     });
     return rows.map(function (r) { return '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td></tr>'; }).join('');
@@ -889,7 +893,7 @@ window.ALUVE.DrawingPage = (function () {
       sec.panels.forEach(function (cfg, pi) {
         var d = cfg.fixGlass ? 'Fix' : directionLabelFor(sec.product, cfg.direction);
         var t = PANEL_TYPE_LABELS[cfg.panelType] + (cfg.panelType === 'kaca' ? ' ' + cfg.glass : '');
-        lines.push('&nbsp;&nbsp;P' + (pi + 1) + ': ' + d + ' — ' + t);
+        lines.push('&nbsp;&nbsp;D' + (pi + 1) + ': ' + d + ' — ' + t);
       });
     });
     return lines.map(function (l) { return '<div>' + l + '</div>'; }).join('');
@@ -1180,6 +1184,13 @@ window.ALUVE.DrawingPage = (function () {
     document.getElementById('btn-print').addEventListener('click', printCurrent);
     document.getElementById('btn-download-all-pdf').addEventListener('click', printAllDrawings);
     document.getElementById('btn-download-all-png').addEventListener('click', downloadAllPng);
+
+    var navLink = document.querySelector('a[data-page="drawing"]');
+    if (navLink) {
+      navLink.addEventListener('click', function () {
+        populateColorSelect();
+      });
+    }
 
     renderSectionsUI();
     renderHistory();

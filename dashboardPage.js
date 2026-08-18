@@ -23,6 +23,27 @@ window.ALUVE.DashboardPage = (function () {
   let pendingDeleteProjectId = null; // set right before the confirm-delete dialog opens
   let editingProjectId = null; // non-null while #modalNewProject is being reused as "Edit Project"
 
+  /**
+   * PATCH: "Semua Project" dipecah jadi 2 subpage di sidebar —
+   * "Project Saya" (dibuat manual oleh estimator, _salesProjectId kosong)
+   * dan "Project Sales" (otomatis dibuat sistem dari permintaan sales,
+   * _salesProjectId terisi). #page-projects sekarang dipakai bersama oleh
+   * keduanya, dibedakan lewat variabel scope ini.
+   */
+  let projectsPageScope = 'mine'; // 'mine' | 'sales'
+
+  const SCOPE_LABELS = {
+    mine: { title: 'Project Saya', subtitle: 'Project yang Anda buat sendiri secara manual.' },
+    sales: { title: 'Project Sales', subtitle: 'Permintaan estimasi harga yang masuk dari Sales App.' }
+  };
+
+  function isFromSalesApp(project) { return !!project._salesProjectId; }
+
+  /** Project Sales yang statusnya masih Draft = belum pernah dihitungkan estimator sama sekali. */
+  function isUnworkedSalesRequest(project) {
+    return isFromSalesApp(project) && project.status === 'draft';
+  }
+
   function notify(message, variant) {
     UiFeedback.showToast(message, variant);
   }
@@ -35,6 +56,11 @@ window.ALUVE.DashboardPage = (function () {
     dom.followupSection = document.getElementById('followupSection');
     dom.followupList = document.getElementById('followupList');
     dom.staleStatCard = document.getElementById('staleStatCard');
+
+    dom.projectsPageTitle = document.getElementById('projectsPageTitle');
+    dom.projectsPageSubtitle = document.getElementById('projectsPageSubtitle');
+    dom.salesQueueBadge = document.getElementById('salesQueueBadge');
+    dom.sidebarSublinks = document.querySelectorAll('[data-project-scope]');
 
     dom.stat = {
       activeCount: document.querySelector('[data-stat="activeCount"]'),
@@ -185,12 +211,52 @@ window.ALUVE.DashboardPage = (function () {
     renderStats(allProjects);
     renderEmptyOrGrid(dom.dashboardGrid, allProjects.slice(0, 6));
     renderProjectsPage();
+    renderSalesQueueBadge(allProjects);
+  }
+
+  /**
+   * Badge notif "belum dikerjakan" pada link sidebar "Project Sales" —
+   * mirip mail belum dibaca: tebal + angka, tetap muncul sampai estimator
+   * mengubah status quotation itu (klik "Terkirim"). Dipanggil ulang
+   * setiap renderAll() jalan, termasuk setelah tombol Refresh navbar
+   * ditekan — jadi ikut ter-update begitu Anto/estimator lain menambah
+   * permintaan baru dari Sales App.
+   */
+  function renderSalesQueueBadge(allProjects) {
+    if (!dom.salesQueueBadge) return;
+    const count = allProjects.filter(isUnworkedSalesRequest).length;
+
+    dom.salesQueueBadge.hidden = count === 0;
+    dom.salesQueueBadge.textContent = count > 99 ? '99+' : String(count);
+
+    const salesSublink = document.querySelector('[data-project-scope="sales"]');
+    if (salesSublink) salesSublink.classList.toggle('has-pending', count > 0);
+  }
+
+  /** Dipanggil saat sublink "Project Saya"/"Project Sales" diklik di sidebar. */
+  function setProjectsScope(scope) {
+    projectsPageScope = (scope === 'sales') ? 'sales' : 'mine';
+
+    dom.sidebarSublinks.forEach(function (link) {
+      link.classList.toggle('is-active', link.dataset.projectScope === projectsPageScope);
+    });
+
+    const labels = SCOPE_LABELS[projectsPageScope];
+    if (dom.projectsPageTitle) dom.projectsPageTitle.textContent = labels.title;
+    if (dom.projectsPageSubtitle) dom.projectsPageSubtitle.textContent = labels.subtitle;
+
+    renderProjectsPage();
   }
 
   function renderProjectsPage() {
     let projects = Project.searchProjects(dom.searchInput.value);
     const statusValue = dom.statusFilter.value;
     if (statusValue) projects = projects.filter(function (p) { return p.status === statusValue; });
+
+    projects = projects.filter(function (p) {
+      return projectsPageScope === 'sales' ? isFromSalesApp(p) : !isFromSalesApp(p);
+    });
+
     renderEmptyOrGrid(dom.allProjectsGrid, bySalesOriginFirst(projects));
   }
 
@@ -364,6 +430,10 @@ window.ALUVE.DashboardPage = (function () {
     dom.searchInput.addEventListener('input', Helper.debounce(renderProjectsPage, 200));
     dom.statusFilter.addEventListener('change', renderProjectsPage);
 
+    dom.sidebarSublinks.forEach(function (link) {
+      link.addEventListener('click', function () { setProjectsScope(link.dataset.projectScope); });
+    });
+
     // "Perlu Ditindaklanjuti" stat card jumps straight to the list of
     // stale leads right below it, so the number is never just a number.
     if (dom.staleStatCard) {
@@ -380,8 +450,9 @@ window.ALUVE.DashboardPage = (function () {
   function init() {
     cacheElements();
     bindEvents();
+    setProjectsScope('mine');
     renderAll();
   }
 
-  return { init: init, renderAll: renderAll, openEditProjectModal: openEditProjectModal };
+  return { init: init, renderAll: renderAll, openEditProjectModal: openEditProjectModal, setProjectsScope: setProjectsScope };
 })();

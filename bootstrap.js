@@ -189,8 +189,92 @@
     updateNavbarForUser(currentUser);
     window.__startEstimatorApp();
     applyRoleRestrictions(currentUser);
+    if (window.ALUVE.ProfilePage) window.ALUVE.ProfilePage.renderUser(currentUser);
     return true;
   }
+
+  /**
+   * PATCH: tombol Refresh navbar. Menarik ulang project/katalog/settings
+   * dari server (persis seperti bootstrapData saat login), TANPA reload
+   * halaman dan TANPA logout — jadi user tidak perlu takut "refresh"
+   * berarti balik ke layar login. Ini juga otomatis memperbaiki kasus
+   * "project yang sudah dihapus Anto masih muncul di akun Niken", karena
+   * daftar project di memori (window.__EST.projects) memang cuma diisi
+   * SEKALI saat login sebelumnya.
+   */
+  async function refreshEstimatorData() {
+    if (!currentUser) return;
+    const btn = document.getElementById('navbarRefreshBtn');
+    const icon = document.getElementById('navbarRefreshIcon');
+    if (icon) icon.classList.add('is-spinning');
+    if (btn) btn.disabled = true;
+
+    try {
+      await bootstrapData(currentUser);
+      if (window.ALUVE.DashboardPage) window.ALUVE.DashboardPage.renderAll();
+      if (window.ALUVE.TrashPage) window.ALUVE.TrashPage.render();
+      if (window.ALUVE.PriceManagerPage) window.ALUVE.PriceManagerPage.renderTable();
+      if (window.ALUVE.UiFeedback) window.ALUVE.UiFeedback.showToast('Data berhasil diperbarui.', 'success', 1800);
+    } catch (err) {
+      if (window.ALUVE.UiFeedback) window.ALUVE.UiFeedback.showToast('Gagal memuat data terbaru. Cek koneksi internet.', 'danger');
+    } finally {
+      if (icon) icon.classList.remove('is-spinning');
+      if (btn) btn.disabled = false;
+    }
+  }
+  window.EstApi.refresh = refreshEstimatorData;
+
+  /**
+   * PATCH: ganti password mandiri dari subpage "Profil Saya" (lihat
+   * profilePage.js). Dua langkah lewat Identity Toolkit REST, sama
+   * seperti proses login — TIDAK perlu endpoint backend baru:
+   *   1. accounts:signInWithPassword — verifikasi password LAMA benar
+   *   2. accounts:update — set password BARU, pakai idToken segar dari
+   *      langkah 1
+   * Firebase otomatis membatalkan idToken/refreshToken LAMA begitu
+   * password diganti — makanya idToken di memori (dan refresh token
+   * "Remember Me" tersimpan, kalau ada) WAJIB langsung ditimpa dengan
+   * yang baru supaya user tidak ter-logout diam-diam.
+   */
+  window.EstAuth = {
+    changePassword: async function (currentPassword, newPassword) {
+      if (!currentUser || !currentUser.email) {
+        return { success: false, message: 'Sesi tidak valid, silakan login ulang.' };
+      }
+      try {
+        const verifyRes = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=' + FIREBASE_API_KEY, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: currentUser.email, password: currentPassword, returnSecureToken: true })
+        });
+        const verifyJson = await verifyRes.json();
+        if (!verifyRes.ok) {
+          const msg = verifyJson.error ? verifyJson.error.message : '';
+          return { success: false, message: (msg.indexOf('INVALID') !== -1 || msg.indexOf('PASSWORD') !== -1) ? 'Password saat ini salah.' : 'Gagal memverifikasi password saat ini.' };
+        }
+
+        const updateRes = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:update?key=' + FIREBASE_API_KEY, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idToken: verifyJson.idToken, password: newPassword, returnSecureToken: true })
+        });
+        const updateJson = await updateRes.json();
+        if (!updateRes.ok) {
+          return { success: false, message: updateJson.error ? updateJson.error.message : 'Gagal mengganti password.' };
+        }
+
+        // Timpa sesi yang sedang jalan dengan token baru supaya tidak logout.
+        idToken = updateJson.idToken;
+        if (localStorage.getItem(REMEMBER_TOKEN_KEY) && updateJson.refreshToken) {
+          localStorage.setItem(REMEMBER_TOKEN_KEY, updateJson.refreshToken);
+        }
+
+        return { success: true };
+      } catch (err) {
+        return { success: false, message: 'Gagal terhubung ke server. Cek koneksi internet.' };
+      }
+    }
+  };
 
   async function doEstLogin() {
     const email = document.getElementById('estLoginEmail').value.trim();
@@ -235,6 +319,7 @@
       updateNavbarForUser(currentUser);
       window.__startEstimatorApp();
       applyRoleRestrictions(currentUser);
+      if (window.ALUVE.ProfilePage) window.ALUVE.ProfilePage.renderUser(currentUser);
     } catch (err) {
       const msg = String(err.message || '');
       setLoginError((msg.indexOf('INVALID') !== -1 || msg.indexOf('PASSWORD') !== -1 || msg.indexOf('EMAIL') !== -1) ? 'Email atau password salah.' : msg);
@@ -259,6 +344,8 @@
     tryAutoLogin();
 
     document.getElementById('estLogoutBtn').addEventListener('click', function (e) { e.preventDefault(); doEstLogout(); });
+    const refreshBtn = document.getElementById('navbarRefreshBtn');
+    if (refreshBtn) refreshBtn.addEventListener('click', refreshEstimatorData);
     document.getElementById('estLoginForgot').addEventListener('click', function (e) {
       e.preventDefault();
       setLoginError('Lupa password? Hubungi Super Admin untuk reset password Anda.');

@@ -124,6 +124,20 @@
     });
   });
 
+  /* ----------------------------------------------------------
+     "Semua Project" sidebar group — collapse/expand toggle only.
+     Which sublink is highlighted, and which data gets shown, is
+     handled by dashboardPage.js (business logic for scope filtering).
+  ---------------------------------------------------------- */
+  const projectsGroupToggle = document.getElementById('sidebarProjectsGroupToggle');
+  const projectsSubmenu = document.getElementById('sidebarProjectsSubmenu');
+  if (projectsGroupToggle && projectsSubmenu) {
+    projectsGroupToggle.addEventListener('click', function () {
+      const collapsed = projectsSubmenu.classList.toggle('is-collapsed');
+      projectsGroupToggle.setAttribute('aria-expanded', String(!collapsed));
+    });
+  }
+
   // Exposed so other modules (dashboardPage.js opening a project, etc.)
   // can navigate between screens without duplicating this logic.
   /* ----------------------------------------------------------

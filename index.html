@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <html lang="id" data-theme="light">
 <head>
+  <!--
+    APP BUILD VERSION — cache-busting + auto-update trigger.
+    PENTING: setiap kali ADA file .js/.css yang diubah dan diupload ulang,
+    nilai ini WAJIB dinaikkan (misal 20260818a -> 20260819a), dan angka yang
+    SAMA PERSIS wajib juga ditulis di file version.json. Ini yang membuat
+    browser semua user otomatis ambil file baru tanpa perlu clear cache
+    manual (lihat versionCheck.js).
+  -->
+  <script>window.APP_BUILD_VERSION = '20260818a';</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ALUVE Project Estimator</title>
@@ -20,12 +29,12 @@
 
   <!-- App stylesheet (design tokens + component styles) -->
   <link rel="icon" type="image/png" href="assets/favicon.png">
-<link rel="stylesheet" href="style.css">
-<link rel="stylesheet" href="drawing.css">
+<link rel="stylesheet" href="style.css?v=20260818a">
+<link rel="stylesheet" href="drawing.css?v=20260818a">
 
   <!-- Print-only stylesheet — professional quotation layout, no effect on screen -->
-  <link rel="stylesheet" href="style-print.css" media="print">
-  <link rel="stylesheet" href="drawing-print.css" media="print">
+  <link rel="stylesheet" href="style-print.css?v=20260818a" media="print">
+  <link rel="stylesheet" href="drawing-print.css?v=20260818a" media="print">
 </head>
 <body>
 
@@ -108,6 +117,10 @@
       </button>
 
       <div class="app-navbar__actions">
+        <button class="icon-btn" type="button" id="navbarRefreshBtn" aria-label="Muat ulang data terbaru" title="Muat ulang data terbaru">
+          <i class="bi bi-arrow-clockwise" id="navbarRefreshIcon"></i>
+        </button>
+
         <button class="icon-btn" type="button" id="themeToggleBtn" aria-label="Ubah tema tampilan" title="Ubah tema tampilan">
           <i class="bi bi-moon-stars" id="themeToggleIcon"></i>
         </button>
@@ -124,6 +137,7 @@
             <li class="dropdown-header">Anto Sastra</li>
             <li class="dropdown-header dropdown-header--sub">GM Operasional &middot; ALUVE</li>
             <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#profile" data-page="profile"><i class="bi bi-person-circle me-2"></i>Profil Saya</a></li>
             <li><a class="dropdown-item" href="#settings"><i class="bi bi-gear me-2"></i>Pengaturan</a></li>
             <li><a class="dropdown-item" href="#help"><i class="bi bi-life-preserver me-2"></i>Bantuan</a></li>
             <li><hr class="dropdown-divider"></li>
@@ -148,9 +162,21 @@
         <a class="app-sidebar__link is-active" href="#dashboard" data-page="dashboard">
           <i class="bi bi-grid-1x2"></i><span>Dashboard</span>
         </a>
-        <a class="app-sidebar__link" href="#projects" data-page="projects">
-          <i class="bi bi-folder2-open"></i><span>Semua Project</span>
-        </a>
+        <div class="app-sidebar__group">
+          <button class="app-sidebar__link app-sidebar__group-toggle" type="button" id="sidebarProjectsGroupToggle" aria-expanded="true" aria-controls="sidebarProjectsSubmenu">
+            <i class="bi bi-folder2-open"></i><span>Semua Project</span>
+            <i class="bi bi-chevron-down app-sidebar__chevron"></i>
+          </button>
+          <div class="app-sidebar__submenu" id="sidebarProjectsSubmenu">
+            <a class="app-sidebar__link app-sidebar__sublink is-active" href="#projects" data-page="projects" data-project-scope="mine">
+              <span>Project Saya</span>
+            </a>
+            <a class="app-sidebar__link app-sidebar__sublink" href="#projects" data-page="projects" data-project-scope="sales">
+              <span>Project Sales</span>
+              <span class="sidebar-notif-badge" id="salesQueueBadge" hidden>0</span>
+            </a>
+          </div>
+        </div>
         <a class="app-sidebar__link" href="#project-detail" data-page="project-detail">
           <i class="bi bi-file-earmark-ruled"></i><span>Detail Project</span>
         </a>
@@ -448,8 +474,8 @@
     <section class="app-page" id="page-projects" data-page-section="projects">
       <div class="app-page__header">
         <div>
-          <h1 class="app-page__title">Semua Project</h1>
-          <p class="app-page__subtitle">Cari dan lanjutkan pengerjaan project.</p>
+          <h1 class="app-page__title" id="projectsPageTitle">Semua Project</h1>
+          <p class="app-page__subtitle" id="projectsPageSubtitle">Cari dan lanjutkan pengerjaan project.</p>
         </div>
         <button class="btn btn-primary btn-lg" type="button" data-bs-toggle="modal" data-bs-target="#modalNewProject">
           <i class="bi bi-plus-lg"></i> Project Baru
@@ -885,6 +911,65 @@
       </div>
     </section>
 
+    <!-- ============================================================
+         PAGE: PROFIL SAYA (info akun + ganti password mandiri)
+    ============================================================ -->
+    <section class="app-page" id="page-profile" data-page-section="profile">
+      <div class="app-page__header">
+        <div>
+          <h1 class="app-page__title">Profil Saya</h1>
+          <p class="app-page__subtitle">Informasi akun dan ganti password.</p>
+        </div>
+      </div>
+
+      <div class="settings-form">
+        <fieldset class="settings-group">
+          <legend>Informasi Akun</legend>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Nama</label>
+              <input type="text" class="form-control" id="profileNameDisplay" disabled>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Email</label>
+              <input type="text" class="form-control" id="profileEmailDisplay" disabled>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Peran</label>
+              <input type="text" class="form-control" id="profileRoleDisplay" disabled>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Bisnis</label>
+              <input type="text" class="form-control" id="profileBusinessDisplay" disabled>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="settings-group">
+          <legend>Ganti Password</legend>
+          <p class="text-muted small">Masukkan password Anda saat ini, lalu password baru yang diinginkan.</p>
+          <div id="profilePasswordError" class="text-danger small mb-2"></div>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label" for="profileCurrentPassword">Password Saat Ini</label>
+              <input type="password" class="form-control" id="profileCurrentPassword" autocomplete="current-password">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="profileNewPassword">Password Baru</label>
+              <input type="password" class="form-control" id="profileNewPassword" autocomplete="new-password" minlength="6">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="profileConfirmPassword">Ulangi Password Baru</label>
+              <input type="password" class="form-control" id="profileConfirmPassword" autocomplete="new-password" minlength="6">
+            </div>
+          </div>
+          <button class="btn btn-primary mt-3" type="button" id="profileChangePasswordBtn">
+            <i class="bi bi-key"></i> Simpan Password Baru
+          </button>
+        </fieldset>
+      </div>
+    </section>
+
   </main>
 
   <!-- ============================================================
@@ -1231,34 +1316,40 @@
   <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
 
   <!-- Master pricing seed data (must load before priceManager.js) -->
-  <script src="masterData.js"></script>
+  <script src="masterData.js?v=20260818a"></script>
 
   <!-- Core modules (order matters: each depends on the ones above it) -->
-  <script src="helper.js"></script>
-  <script src="photoCropper.js"></script>
-  <script src="validation.js"></script>
-  <script src="calculator.js"></script>
-  <script src="storage.js"></script>
-  <script src="gsheetSync.js"></script>
-  <script src="priceManager.js"></script>
-  <script src="uiFeedback.js"></script>
-  <script src="exportEngine.js"></script>
-  <script src="project.js"></script>
+  <script src="helper.js?v=20260818a"></script>
+  <script src="photoCropper.js?v=20260818a"></script>
+  <script src="validation.js?v=20260818a"></script>
+  <script src="calculator.js?v=20260818a"></script>
+  <script src="storage.js?v=20260818a"></script>
+  <script src="gsheetSync.js?v=20260818a"></script>
+  <script src="priceManager.js?v=20260818a"></script>
+  <script src="uiFeedback.js?v=20260818a"></script>
+  <script src="exportEngine.js?v=20260818a"></script>
+  <script src="project.js?v=20260818a"></script>
 
   <!-- Page-level wiring -->
-  <script src="settingsPage.js"></script>
-  <script src="priceManagerPage.js"></script>
-  <script src="projectDetailPage.js"></script>
-  <script src="dashboardPage.js"></script>
-  <script src="trashPage.js"></script>
-  <script src="drawingPage.js"></script>
+  <script src="settingsPage.js?v=20260818a"></script>
+  <script src="priceManagerPage.js?v=20260818a"></script>
+  <script src="projectDetailPage.js?v=20260818a"></script>
+  <script src="dashboardPage.js?v=20260818a"></script>
+  <script src="trashPage.js?v=20260818a"></script>
+  <script src="drawingPage.js?v=20260818a"></script>
+  <script src="profilePage.js?v=20260818a"></script>
 
   <!-- App UI wiring — presentation only (nav/theme/collapse) -->
-  <script src="ui.js"></script>
+  <script src="ui.js?v=20260818a"></script>
 
   <!-- Application bootstrap — initializes every module above and wires
        the Export modal to whichever project is currently open. -->
-  <script src="bootstrap.js"></script>
-  <script src="app.js"></script>
+  <script src="bootstrap.js?v=20260818a"></script>
+  <script src="app.js?v=20260818a"></script>
+
+  <!-- Silent auto-update: polls version.json, reloads the page by itself
+       when a newer build is detected (see versionCheck.js for the safety
+       rules on WHEN it's allowed to reload). -->
+  <script src="versionCheck.js?v=20260818a"></script>
 </body>
 </html>

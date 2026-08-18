@@ -410,6 +410,49 @@ h1, h2, h3, h4 { font-family: var(--font-display); color: var(--text-primary); m
 .app-sidebar__link:hover { background: var(--bg-surface-hover); text-decoration: none; color: var(--text-primary); }
 .app-sidebar__link.is-active { background: var(--accent-primary-tint); color: var(--accent-primary); }
 
+.app-sidebar__group { display: flex; flex-direction: column; }
+.app-sidebar__group-toggle {
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+.app-sidebar__group-toggle span { flex: 1; }
+.app-sidebar__chevron { font-size: 13px !important; width: auto !important; transition: transform var(--duration-base, .15s) var(--ease-standard, ease); }
+.app-sidebar__group-toggle[aria-expanded="false"] .app-sidebar__chevron { transform: rotate(-90deg); }
+
+.app-sidebar__submenu {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-left: 30px;
+  overflow: hidden;
+  max-height: 200px;
+  transition: max-height var(--duration-base, .15s) var(--ease-standard, ease);
+}
+.app-sidebar__submenu.is-collapsed { max-height: 0; }
+.app-sidebar__sublink { font-weight: 500; justify-content: space-between; }
+.app-sidebar__sublink.has-pending { color: var(--text-primary); font-weight: 700; }
+
+.sidebar-notif-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--accent-danger);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+#navbarRefreshIcon.is-spinning { animation: navbarRefreshSpin .7s linear infinite; }
+@keyframes navbarRefreshSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
 .app-sidebar__divider { height: 1px; background: var(--border-default); margin: var(--space-4) 4px; }
 
 .app-sidebar__footer { margin-top: auto; }
